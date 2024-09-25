@@ -1,0 +1,65 @@
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <option name="LINE_SEPARATOR" value="&#10;" />
+    <SQLiteCodeStyleSettings version="7">
+      <option name="USE_GENERAL_STYLE" value="false" />
+      <option name="KEYWORD_CASE" value="2" />
+      <option name="IDENTIFIER_CASE" value="1" />
+      <option name="TYPE_CASE" value="3" />
+      <option name="CUSTOM_TYPE_CASE" value="3" />
+      <option name="ALIAS_CASE" value="4" />
+      <option name="QUOTE_IDENTIFIER" value="1" />
+      <option name="QUERY_EL_LINE" value="0" />
+      <option name="SUBQUERY_OPENING" value="1" />
+      <option name="SUBQUERY_CONTENT" value="4" />
+      <option name="SUBQUERY_CLOSING" value="3" />
+      <option name="INSERT_OPENING" value="4" />
+      <option name="INSERT_VALUES_EL_LINE" value="101" />
+      <option name="INSERT_SPACE_WITHIN_PARENTHESES" value="true" />
+      <option name="INSERT_MATRIX_ALIGN" value="true" />
+      <option name="SET_EL_LINE" value="101" />
+      <option name="SET_ALIGN_EQUAL_SIGN" value="false" />
+      <option name="SELECT_EL_WRAP" value="2" />
+      <option name="SELECT_USE_AS_WORD" value="1" />
+      <option name="FROM_ALIGN_JOIN_TABLES" value="true" />
+      <option name="FROM_ALIGN_ALIASES" value="true" />
+      <option name="WHERE_EL_WRAP" value="2" />
+      <option name="WHERE_EL_BOUND" value="0" />
+      <option name="ORDER_ALIGN_ASC_DESC" value="true" />
+      <option name="TABLE_OPENING" value="1" />
+      <option name="TABLE_CONTENT" value="2" />
+      <option name="TABLE_CLOSING" value="6" />
+      <option name="CONSTRAINT_WRAP_1" value="false" />
+      <option name="CONSTRAINT_WRAP_4" value="true" />
+    </SQLiteCodeStyleSettings>
+    <SqlCodeStyleSettings version="7">
+      <option name="KEYWORD_CASE" value="2" />
+      <option name="IDENTIFIER_CASE" value="1" />
+      <option name="TYPE_CASE" value="3" />
+      <option name="CUSTOM_TYPE_CASE" value="3" />
+      <option name="ALIAS_CASE" value="4" />
+      <option name="QUOTE_IDENTIFIER" value="1" />
+      <option name="QUOTE_TYPE" value="10" />
+      <option name="TABLE_OPENING" value="1" />
+      <option name="TABLE_CONTENT" value="3" />
+      <option name="TABLE_CLOSING" value="6" />
+      <option name="CONSTRAINT_WRAP_1" value="false" />
+    </SqlCodeStyleSettings>
+    <codeStyleSettings language="SQL">
+      <option name="KEEP_LINE_BREAKS" value="false" />
+      <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
+      <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="USE_TAB_CHARACTER" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
+    <codeStyleSettings language="SQLite">
+      <option name="KEEP_LINE_BREAKS" value="false" />
+      <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
+      <indentOptions>
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
+        <option name="USE_TAB_CHARACTER" value="true" />
+      </indentOptions>
+    </codeStyleSettings>
+  </code_scheme>
+</component>
