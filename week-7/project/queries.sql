@@ -22,3 +22,43 @@ SELECT *
 -- READ all active users
 SELECT *
   FROM users_active;
+
+
+-- CRUD on folders:
+-- Create a new folder
+  WITH root_user AS (
+                    SELECT id
+                      FROM users
+                     WHERE username = 'root'
+                    )
+INSERT
+  INTO folders (name, parent_folder_id, owner_id)
+VALUES ('root_folder', NULL, (
+                             SELECT id
+                               FROM root_user
+                             ))
+     , ('folder_a', 1, (
+                       SELECT id
+                         FROM root_user
+                       ));
+
+
+INSERT INTO folders (name, parent_folder_id, owner_id)
+VALUES ('folder_b', (
+                    SELECT id
+                      FROM folders f
+                     WHERE f.name = 'root_folder'
+                    ), (
+                       SELECT id
+                         FROM users
+                        WHERE username = 'root'
+                       ));
+
+SELECT f.id
+     , f.name
+     , rf.name    AS parent_folder
+     , u.username AS owner
+  FROM folders     f
+      JOIN users   u ON u.id = f.owner_id
+      JOIN folders rf ON rf.id = f.parent_folder_id
+;

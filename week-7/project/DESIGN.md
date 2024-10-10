@@ -50,8 +50,7 @@ As such, included in the database's scope is:
 
 #### Which people, places, things, etc. are *outside* the scope of your database?
 
-Multitenant support is out of the scope for this proof of concept database.
-And also the activity log.
+Multitenant support is out of the scope for this proof of concept database. And also the activity log.
 
 ## Functional Requirements
 
@@ -240,6 +239,33 @@ erDiagram
         TEXT role "root | admin | user"
     }
 ```
+
+
+
+```mermaid
+---
+title: Folder hierarchy structure
+---
+graph TB
+    Folder_A --> Folder_B;
+    Folder_A --> Folder_C
+    Folder_B --> Folder_D;
+```
+
+
+
+```mermaid
+erDiagram
+    folder {
+        INTEGER id PK
+        TEXT name
+        INTEGER parent_id FK
+        INTEGER owner_id FK
+    }
+    folder ||--o| folder: "has zero or only one parent"
+    folder |o--o{ folder: "have one or more children"
+```
+
 
 ## Optimizations
 
