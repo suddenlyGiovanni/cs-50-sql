@@ -109,6 +109,9 @@
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/schema.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/seed.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/vacuum.sql" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/queries.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/week-7/project/vacuum.sql" dialect="SQLite" />
     <file url="PROJECT" dialect="SQLite" />
   </component>
 </project>
