@@ -212,7 +212,7 @@ Key Tables:
 - **Permissions**: define access control for files and folders.
 - **Files**: represents individual files with metadata such as the path, name, size, and the content (which is a URI that refers to a file in a storage bucket somewhere).
 - **Folders**: Represents the directories containing files or other folders.
-- **ActivityLog**: Tracks all CRUD operations performed in the VFS.
+- ~~**ActivityLog**: Tracks all CRUD operations performed in the VFS.~~
 
 #### Users
 
@@ -279,3 +279,11 @@ In this section you should answer the following questions:
 
 * What are the limitations of your design?
 * What might your database not be able to represent very well?
+
+
+TODO: 
+- [] Folders
+- [] Folders
+- [] Permissions
+- [] Roles
+- [] Users_resources
