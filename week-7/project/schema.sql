@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     deleted         INTEGER  NOT NULL CHECK ( deleted IN (TRUE, FALSE) ) DEFAULT FALSE              -- soft delete flag
 );
 
+
 DROP INDEX IF EXISTS users_username_index;
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);
 
@@ -53,19 +54,20 @@ SELECT id
 -- Roles are granted different permission to resources (file or folder)
 DROP TABLE IF EXISTS roles;
 CREATE TABLE IF NOT EXISTS roles (
-    id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    role_name TEXT NOT NULL UNIQUE CHECK ( role_name IN ('admin', 'owner', 'contributor', 'viewer') )
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL UNIQUE CHECK ( name IN ('admin', 'owner', 'contributor', 'viewer') ),
+    description TEXT NOT NULL
 );
 
 DROP INDEX IF EXISTS roles_role_name_index;
-CREATE INDEX IF NOT EXISTS roles_role_name_index ON roles(id, role_name);
+CREATE INDEX IF NOT EXISTS roles_role_name_index ON roles(id, name);
 
 
-INSERT INTO roles (role_name)
-VALUES ('admin')       -- can change ownership and manage permissions
-     , ('owner')       -- can read, write, delete and manage permissions
-     , ('contributor') -- can read, write but not delete or manage permissions
-     , ('viewer'); -- can only read
+INSERT INTO roles (name, description)
+VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the ability to MODIFY PERMISSIONS.')
+     , ('owner', 'Can READ, WRITE and DELETE the resource; Automatically assigned to the user creating said resource')
+     , ('editor', 'Can READ and WRITE but not delete or manage permissions')
+     , ('viewer', 'Can only VIEW the resource');
 
 
 DROP TABLE IF EXISTS folders;
@@ -151,17 +153,47 @@ END;
 
 DROP TABLE IF EXISTS permissions;
 CREATE TABLE IF NOT EXISTS permissions (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    role_id         INTEGER NOT NULL,
-    user_id         INTEGER NOT NULL,
-    folder_id       INTEGER DEFAULT NULL,
-    file_id         INTEGER DEFAULT NULL,
-    permission_type TEXT    NOT NULL CHECK ( permission_type IN ('read', 'write', 'delete', 'manage') ),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-        ON DELETE CASCADE,
-    FOREIGN KEY (folder_id) REFERENCES folders(id)
-        ON DELETE CASCADE,
---     foreign key (file_id) references files(id) ON DELETE CASCADE
-    UNIQUE (user_id, folder_id, file_id),
-    CHECK ( folder_id IS NOT NULL OR file_id IS NOT NULL )
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL CHECK ( name IN ('read', 'write', 'delete', 'manage') ) UNIQUE,
+    description TEXT NOT NULL
 );
+
+DROP INDEX IF EXISTS permissions_permission_name_index;
+CREATE INDEX IF NOT EXISTS permissions_permission_name_index ON permissions(id, name);
+
+INSERT INTO permissions (name, description)
+VALUES ('read', 'Can READ a resource, Folder or File')
+     , ('write', 'Can UPDATE a resource, Folder or File')
+     , ('delete', 'Can DELETE a resource, Folder or File')
+     , ('manage', 'Can change the access control of a resource, File or Folder');
+
+-- Prevent UPDATES
+DROP TRIGGER IF EXISTS prevent_update_permissions;
+CREATE TRIGGER prevent_update_permissions
+    BEFORE UPDATE
+    ON permissions
+BEGIN
+    SELECT raise(ABORT, 'Modifications to the permissions table are not allowed.');
+END;
+
+-- Prevent DELETES
+DROP TRIGGER IF EXISTS prevent_delete_permissions;
+CREATE TRIGGER prevent_delete_permissions
+    BEFORE DELETE
+    ON permissions
+BEGIN
+    SELECT raise(ABORT, 'Deletions from the permissions table are not allowed.');
+END;
+
+-- Prevent additional INSERTS
+DROP TRIGGER IF EXISTS prevent_insert_permissions;
+CREATE TRIGGER prevent_insert_permissions
+    BEFORE INSERT
+    ON permissions
+    WHEN (
+         SELECT count(*)
+           FROM permissions
+         ) > 0
+BEGIN
+    SELECT raise(ABORT, 'Additional inserts to the permissions table are not allowed.');
+END;
