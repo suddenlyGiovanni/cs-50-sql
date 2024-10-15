@@ -1,10 +1,19 @@
--- Roles are granted different permission to resources (file or folder)
+BEGIN;
+
 DROP TABLE IF EXISTS roles;
+DROP TYPE IF EXISTS ROLE_TYPE;
+
+
+CREATE TYPE ROLE_TYPE AS ENUM ('admin', 'owner', 'editor', 'viewer');
+
 CREATE TABLE IF NOT EXISTS roles (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL UNIQUE CHECK ( name IN ('admin', 'owner', 'editor', 'viewer') ),
-    description TEXT NOT NULL
+    id          SMALLSERIAL PRIMARY KEY,
+    name        ROLE_TYPE    NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL
 );
+COMMENT ON TABLE roles IS 'Role Base Access Control';
+COMMENT ON COLUMN roles.name IS 'The unique name of the role';
+COMMENT ON COLUMN roles.description IS 'What the domain behaviour is attached to the role';
 
 DROP INDEX IF EXISTS roles_role_name_index;
 CREATE INDEX IF NOT EXISTS roles_role_name_index ON roles(id, name);
@@ -15,3 +24,20 @@ VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the abi
      , ('owner', 'Can READ, WRITE and DELETE the resource; Automatically assigned to the user creating said resource')
      , ('editor', 'Can READ and WRITE but not delete or manage permissions')
      , ('viewer', 'Can only VIEW the resource');
+
+CREATE OR REPLACE FUNCTION roles_seal() RETURNS TRIGGER AS
+$$
+BEGIN
+    RAISE EXCEPTION 'Modifications to the roles table are not allowed.';
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER roles_seal_trigger
+    BEFORE INSERT OR UPDATE OR DELETE
+    ON roles
+    FOR EACH ROW
+EXECUTE FUNCTION roles_seal();
+COMMENT ON TRIGGER roles_seal_trigger ON roles IS 'Seal the roles table';
+
+COMMIT;

@@ -117,7 +117,7 @@
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/resources.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/role_permissions.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/role_permissions_matrix.sql" dialect="SQLite" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/roles.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/week-7/project/ddl/roles.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/user_role_resource.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/users.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/queries.sql" dialect="SQLite" />
