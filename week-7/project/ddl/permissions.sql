@@ -1,8 +1,14 @@
+BEGIN;
+
 DROP TABLE IF EXISTS permissions;
+DROP TYPE IF EXISTS PERMISSION_TYPE;
+
+CREATE TYPE PERMISSION_TYPE AS ENUM ('read', 'write', 'delete', 'manage');
+
 CREATE TABLE IF NOT EXISTS permissions (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    name        TEXT NOT NULL CHECK ( name IN ('read', 'write', 'delete', 'manage') ) UNIQUE,
-    description TEXT NOT NULL
+    id          SMALLSERIAL PRIMARY KEY,
+    name        PERMISSION_TYPE NOT NULL UNIQUE,
+    description VARCHAR(255)    NOT NULL
 );
 
 DROP INDEX IF EXISTS permissions_permission_name_index;
@@ -14,33 +20,22 @@ VALUES ('read', 'Can READ a resource, Folder or File')
      , ('delete', 'Can DELETE a resource, Folder or File')
      , ('manage', 'Can change the access control of a resource, File or Folder');
 
--- Prevent UPDATES
-DROP TRIGGER IF EXISTS prevent_update_permissions;
-CREATE TRIGGER prevent_update_permissions
-    BEFORE UPDATE
-    ON permissions
-BEGIN
-    SELECT raise(ABORT, 'Modifications to the permissions table are not allowed.');
-END;
 
--- Prevent DELETES
-DROP TRIGGER IF EXISTS prevent_delete_permissions;
-CREATE TRIGGER prevent_delete_permissions
-    BEFORE DELETE
-    ON permissions
+CREATE OR REPLACE FUNCTION permissions_seal() RETURNS TRIGGER AS
+$$
 BEGIN
-    SELECT raise(ABORT, 'Deletions from the permissions table are not allowed.');
+    RAISE EXCEPTION 'Modifications to the permissions table are not allowed.';
+    RETURN NULL;
 END;
+$$ LANGUAGE plpgsql;
 
--- Prevent additional INSERTS
-DROP TRIGGER IF EXISTS prevent_insert_permissions;
-CREATE TRIGGER prevent_insert_permissions
-    BEFORE INSERT
+
+CREATE TRIGGER permissions_seal_trigger
+    BEFORE INSERT OR UPDATE OR DELETE
     ON permissions
-    WHEN (
-         SELECT count(*)
-           FROM permissions
-         ) > 0
-BEGIN
-    SELECT raise(ABORT, 'Additional inserts to the permissions table are not allowed.');
-END;
+    FOR EACH ROW
+EXECUTE FUNCTION permissions_seal();
+
+COMMENT ON TRIGGER permissions_seal_trigger ON permissions IS 'Seal the permissions table';
+
+COMMIT;
