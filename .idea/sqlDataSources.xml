@@ -3,6 +3,11 @@
   <component name="DdlMappings">
     <mapping uuid="55b4858f-4903-4071-adea-a61c8522cfe3" name="DDL Mapping">
       <data-sources db="46ea76b3-cd58-4891-8673-115ac937b397" ddl="532f685a-1a18-42ae-91fd-f38ff968295f" />
+      <scope>
+        <node kind="database" qname="virtual_file_system">
+          <node kind="schema" qname="@" />
+        </node>
+      </scope>
     </mapping>
   </component>
   <component name="SqlDataSourceStorage">

@@ -1,5 +1,5 @@
 DROP VIEW IF EXISTS active_users;
-CREATE VIEW IF NOT EXISTS active_users AS
+CREATE VIEW active_users AS
 SELECT id
      , username
      , email
