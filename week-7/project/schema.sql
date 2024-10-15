@@ -70,6 +70,17 @@ VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the abi
      , ('viewer', 'Can only VIEW the resource');
 
 
+-- Defines the type of resource: folder or file
+DROP TABLE IF EXISTS resources;
+CREATE TABLE IF NOT EXISTS resources (
+    id   INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    type TEXT    NOT NULL CHECK ( type IN ('folder', 'file') )
+);
+
+DROP INDEX IF EXISTS resources_type_index;
+CREATE INDEX IF NOT EXISTS resources_type_index ON resources(type);
+
+
 DROP TABLE IF EXISTS folders;
 -- Folders represent the hierarchical folders structure.
 -- The parent-child relationship is defined by a self-referencing foreign key for the subfolders
@@ -81,10 +92,14 @@ CREATE TABLE IF NOT EXISTS folders (
     updated_at       DATETIME NOT NULL DEFAULT current_timestamp, -- Folder last update timestamp, auto-updated on every update, please omit this field in the INSERT and UPDATE statements
     created_by       INTEGER  NOT NULL,                           -- READONLY Reference to the user who owns the folder
     updated_by       INTEGER  NOT NULL,                           -- Reference to the user who last updated the folder
+    resource_id      INTEGER  NOT NULL UNIQUE,                    -- Reference to the resource table
     FOREIGN KEY (parent_folder_id) REFERENCES folders(id)
         ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    FOREIGN KEY (resource_id) REFERENCES resources(id)
+        ON DELETE CASCADE
+
 );
 
 DROP TRIGGER IF EXISTS folders_name_unique_within_parent;
@@ -120,10 +135,14 @@ CREATE TABLE IF NOT EXISTS files (
     updated_at       DATETIME NOT NULL DEFAULT current_timestamp, -- READONLY, auto-updated on every update, please omit this field in the INSERT and UPDATE statements
     created_by       INTEGER  NOT NULL,                           -- READONLY, reference to the user who created the file
     updated_by       INTEGER  NOT NULL,                           -- reference to the user who last updated the file
+    resource_id      INTEGER  NOT NULL UNIQUE,                    -- Reference to the resource table
     FOREIGN KEY (parent_folder_id) REFERENCES folders(id)
         ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (updated_by) REFERENCES users(id),
+    FOREIGN KEY (resource_id) REFERENCES resources(id)
+        ON DELETE CASCADE
+
 );
 
 DROP INDEX IF EXISTS files_parent_folder_id_index;
@@ -199,6 +218,7 @@ BEGIN
 END;
 
 
+-- Role-Permission mapping: Many-to-Many relationship
 DROP TABLE IF EXISTS role_permissions;
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id       INTEGER NOT NULL,
@@ -297,3 +317,20 @@ SELECT r.name   AS role
       JOIN permissions  p ON rp.permission_id = p.id
  GROUP BY r.name
  ORDER BY r.id ASC;
+
+
+
+DROP TABLE IF EXISTS user_role_resource;
+CREATE TABLE IF NOT EXISTS user_role_resource (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    role_id     INTEGER NOT NULL,
+    resource_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (resource_id) REFERENCES resources(id)
+        ON DELETE CASCADE
+
+);
