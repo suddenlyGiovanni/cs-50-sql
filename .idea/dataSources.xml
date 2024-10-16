@@ -312,9 +312,10 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="virtual_file_system@localhost" uuid="46ea76b3-cd58-4891-8673-115ac937b397">
+    <data-source source="LOCAL" name="virtual_file_system@localhost" single-connection="true" uuid="46ea76b3-cd58-4891-8673-115ac937b397">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
+      <rewrite-bounds>false</rewrite-bounds>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/virtual_file_system</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>

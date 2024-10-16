@@ -1,77 +1,31 @@
 -- Role-Permission mapping: Many-to-Many relationship
 DROP TABLE IF EXISTS role_permissions;
+
 CREATE TABLE IF NOT EXISTS role_permissions (
-    role_id       INTEGER NOT NULL,
-    permission_id INTEGER NOT NULL,
+    role_id       SMALLINT NOT NULL,
+    permission_id SMALLINT NOT NULL,
     PRIMARY KEY (role_id, permission_id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
         ON DELETE CASCADE,
     FOREIGN KEY (permission_id) REFERENCES permissions(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+    UNIQUE (role_id, permission_id)
 );
 
 
-DROP TRIGGER IF EXISTS role_permissions_role_id_index;
+DROP TRIGGER IF EXISTS role_permissions_role_id_index ON role_permissions;
 CREATE INDEX IF NOT EXISTS role_permissions_role_id_index ON role_permissions(role_id, permission_id);
 
-  WITH admin_role_id AS (
-                        SELECT id
-                          FROM roles
-                         WHERE name = 'admin'
-                        )
-     , permissions_ids AS (
-                        SELECT id, name FROM permissions WHERE name IN ('read', 'write', 'delete', 'manage')
-                        )
+  WITH role_permissions_mapping AS (
+                                   SELECT r.id AS role_id, p.id AS permission_id
+                                     FROM roles           r
+                                         JOIN permissions p
+                                         ON ((r.name = 'admin' AND p.name IN ('read', 'write', 'delete', 'manage')) OR
+                                             (r.name = 'owner' AND p.name IN ('read', 'write', 'delete')) OR
+                                             (r.name = 'editor' AND p.name IN ('read', 'write')) OR
+                                             (r.name = 'viewer' AND p.name = 'read'))
+                                   )
 INSERT
   INTO role_permissions (role_id, permission_id)
-SELECT admin_role_id.id, permissions_ids.id
-  FROM admin_role_id
-     , permissions_ids;
-
-
-  WITH owner_role_id AS (
-                        SELECT id
-                          FROM roles
-                         WHERE name = 'owner'
-                        )
-     , permissions_ids AS (
-                        SELECT id, name FROM permissions WHERE name IN ('read', 'write', 'delete')
-                        )
-INSERT
-  INTO role_permissions (role_id, permission_id)
-SELECT owner_role_id.id, permissions_ids.id
-  FROM owner_role_id
-     , permissions_ids;
-
-
-  WITH editor_role_id AS (
-                         SELECT id
-                           FROM roles
-                          WHERE name = 'editor'
-                         )
-     , permissions_ids AS (
-                         SELECT id, name
-                           FROM permissions
-                          WHERE name IN ('read', 'write')
-                         )
-INSERT
-  INTO role_permissions (role_id, permission_id)
-SELECT editor_role_id.id, permissions_ids.id
-  FROM editor_role_id
-     , permissions_ids;
-
-  WITH viewer_role_id AS (
-                         SELECT id
-                           FROM roles
-                          WHERE name = 'viewer'
-                         )
-     , permissions_ids AS (
-                         SELECT id, name
-                           FROM permissions
-                          WHERE name IN ('read')
-                         )
-INSERT
-  INTO role_permissions (role_id, permission_id)
-SELECT viewer_role_id.id, permissions_ids.id
-  FROM viewer_role_id
-     , permissions_ids;
+SELECT role_id, permission_id
+  FROM role_permissions_mapping;

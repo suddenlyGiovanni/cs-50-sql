@@ -1,20 +1,14 @@
 DROP VIEW IF EXISTS role_permissions_matrix;
-CREATE VIEW IF NOT EXISTS role_permissions_matrix AS
-SELECT r.name   AS role
-     , max(CASE WHEN p.name = 'manage' THEN TRUE
-                                       ELSE FALSE
-           END) AS manage
-     , max(CASE WHEN p.name = 'read' THEN TRUE
-                                     ELSE FALSE
-           END) AS read
-     , max(CASE WHEN p.name = 'write' THEN TRUE
-                                      ELSE FALSE
-           END) AS write
-     , max(CASE WHEN p.name = 'delete' THEN TRUE
-                                       ELSE FALSE
-           END) AS "delete"
+CREATE OR REPLACE VIEW role_permissions_matrix AS
+SELECT r.name                     AS role
+     , rp.role_id                 AS role_id
+     , bool_or(p.name = 'read')   AS read
+     , bool_or(p.name = 'write')  AS write
+     , bool_or(p.name = 'delete') AS delete
+     , bool_or(p.name = 'manage') AS manage
   FROM role_permissions rp
-      JOIN roles        r ON rp.role_id = r.id
-      JOIN permissions  p ON rp.permission_id = p.id
- GROUP BY r.name
- ORDER BY r.id ASC;
+      JOIN roles        r ON r.id = rp.role_id
+      JOIN permissions  p ON p.id = rp.permission_id
+ GROUP BY rp.role_id
+        , r.name
+ ORDER BY rp.role_id;
