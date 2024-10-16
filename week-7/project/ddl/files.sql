@@ -1,6 +1,6 @@
 BEGIN;
 
-DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS files CASCADE;
 DROP INDEX IF EXISTS files_resource_id_index;
 DROP TRIGGER IF EXISTS files_name_unique_within_parent ON files;
 DROP TRIGGER IF EXISTS files_updated_at_trigger ON files;

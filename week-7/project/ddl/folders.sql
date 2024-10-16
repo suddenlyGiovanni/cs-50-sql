@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS folders;
+DROP TABLE IF EXISTS folders CASCADE;
 DROP INDEX IF EXISTS folders_resource_id_index;
 DROP INDEX IF EXISTS folders_parent_folder_id_index;
 DROP TRIGGER IF EXISTS folders_name_unique_within_parent_trigger ON folders;
