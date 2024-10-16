@@ -2,13 +2,13 @@ DROP VIEW IF EXISTS user_role_resource_access_view;
 
 CREATE OR REPLACE VIEW user_role_resource_access_view AS
 SELECT user_role_resource.*
-     , role_permissions_matrix.role
-     , role_permissions_matrix.manage
-     , role_permissions_matrix.read
-     , role_permissions_matrix.write
-     , role_permissions_matrix.delete
+     , role_permissions_matrix_view.role
+     , role_permissions_matrix_view.manage
+     , role_permissions_matrix_view.read
+     , role_permissions_matrix_view.write
+     , role_permissions_matrix_view.delete
   FROM user_role_resource
-      JOIN role_permissions_matrix ON user_role_resource.role_id = role_permissions_matrix.role_id;
+      JOIN role_permissions_matrix_view ON user_role_resource.role_id = role_permissions_matrix_view.role_id;
 
 COMMENT ON VIEW user_role_resource_access_view IS 'User-Role-Resource access view';
 COMMENT ON COLUMN user_role_resource_access_view.role IS 'Role name';

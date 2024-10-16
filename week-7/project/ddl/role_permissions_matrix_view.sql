@@ -1,5 +1,5 @@
-DROP VIEW IF EXISTS role_permissions_matrix;
-CREATE OR REPLACE VIEW role_permissions_matrix AS
+DROP VIEW IF EXISTS role_permissions_matrix_view;
+CREATE OR REPLACE VIEW role_permissions_matrix_view AS
 SELECT r.name                     AS role
      , rp.role_id                 AS role_id
      , bool_or(p.name = 'read')   AS read
