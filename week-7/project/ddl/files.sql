@@ -63,7 +63,7 @@ EXECUTE FUNCTION validate_unique_file_name();
 
 
 
-CREATE OR REPLACE FUNCTION update_folders_timestamp() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION files_update_timestamp() RETURNS TRIGGER AS
 $$
 BEGIN
     new.updated_at = current_timestamp;
@@ -76,5 +76,5 @@ CREATE TRIGGER files_updated_at_trigger
     BEFORE UPDATE
     ON files
     FOR EACH ROW
-EXECUTE FUNCTION update_folders_timestamp();
+EXECUTE FUNCTION files_update_timestamp();
 END;
