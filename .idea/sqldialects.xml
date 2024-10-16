@@ -110,13 +110,13 @@
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/seed.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/vacuum.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/active_users.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/ddl/active_users_view.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/files.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/folders.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/permissions.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/resources.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/role_permissions.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/role_permissions_matrix.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/ddl/role_permissions_matrix_view.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/roles.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/user_role_resource.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/ddl/user_role_resource_access_view.sql" dialect="PostgreSQL" />
