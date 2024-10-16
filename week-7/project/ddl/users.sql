@@ -1,4 +1,10 @@
-DROP TABLE IF EXISTS users;
+BEGIN;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TRIGGER IF EXISTS users_prevent_created_at_update_trigger ON users;
+DROP TRIGGER IF EXISTS users_soft_delete_trigger ON users;
+DROP INDEX IF EXISTS users_username_index;
+DROP INDEX IF EXISTS users_deleted_index;
+
 CREATE TABLE IF NOT EXISTS users (
     id              SERIAL PRIMARY KEY,
     username        VARCHAR(255) NOT NULL UNIQUE,
@@ -16,15 +22,10 @@ COMMENT ON COLUMN users.created_at IS 'User creation timestamp, auto-generated o
 COMMENT ON COLUMN users.deleted IS 'Soft delete flag';
 
 
-
-DROP INDEX IF EXISTS users_username_index;
 CREATE INDEX IF NOT EXISTS users_username_index ON users(username);
-
-DROP INDEX IF EXISTS users_deleted_index;
 CREATE INDEX IF NOT EXISTS users_deleted_index ON users(deleted);
 
-
-CREATE OR REPLACE FUNCTION prevent_created_at_update() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION users_prevent_created_at_update() RETURNS TRIGGER AS
 $$
 BEGIN
     IF new.created_at != old.created_at THEN
@@ -34,15 +35,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
-DROP TRIGGER IF EXISTS users_prevent_created_at_update_trigger ON users;
-CREATE TRIGGER users_prevent_created_at_update_trigger
-    BEFORE UPDATE
-    ON users
-    FOR EACH ROW
-EXECUTE FUNCTION prevent_created_at_update();
-
-
 CREATE OR REPLACE FUNCTION users_soft_delete() RETURNS TRIGGER AS
 $$
 BEGIN
@@ -51,11 +43,20 @@ BEGIN
     RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION users_soft_delete() IS 'Soft delete function for users table';
 
-DROP TRIGGER IF EXISTS users_soft_delete_trigger ON users;
+CREATE TRIGGER users_prevent_created_at_update_trigger
+    BEFORE UPDATE
+    ON users
+    FOR EACH ROW
+EXECUTE FUNCTION users_prevent_created_at_update();
+
 CREATE TRIGGER users_soft_delete_trigger
     BEFORE DELETE
     ON users
     FOR EACH ROW
 EXECUTE FUNCTION users_soft_delete();
+
 COMMENT ON TRIGGER users_soft_delete_trigger ON users IS 'Users soft delete trigger';
+
+END;
