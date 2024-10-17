@@ -1,4 +1,6 @@
+BEGIN;
 DROP VIEW IF EXISTS active_users_view;
+
 CREATE VIEW active_users_view AS
 SELECT id
      , username
@@ -7,3 +9,5 @@ SELECT id
      , created_at
   FROM users
  WHERE deleted = FALSE;
+
+COMMIT;

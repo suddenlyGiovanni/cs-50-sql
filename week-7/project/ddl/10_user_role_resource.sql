@@ -24,4 +24,4 @@ COMMENT ON COLUMN user_role_resource.role_id IS 'Reference to the role table';
 CREATE INDEX user_role_resource_id_index ON user_role_resource(resource_id);
 CREATE INDEX user_role_resource_user_id_index ON user_role_resource(user_id);
 
-END;
+COMMIT;

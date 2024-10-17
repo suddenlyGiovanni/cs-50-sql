@@ -1,4 +1,5 @@
--- Role-Permission mapping: Many-to-Many relationship
+BEGIN;
+
 DROP TABLE IF EXISTS role_permissions;
 
 CREATE TABLE IF NOT EXISTS role_permissions (
@@ -11,6 +12,9 @@ CREATE TABLE IF NOT EXISTS role_permissions (
         ON DELETE CASCADE,
     UNIQUE (role_id, permission_id)
 );
+COMMENT ON TABLE role_permissions IS 'Role-Permission mapping table; A role can have multiple permissions and a permission can be assigned to multiple roles';
+COMMENT ON COLUMN role_permissions.role_id IS 'Reference to the role table';
+COMMENT ON COLUMN role_permissions.permission_id IS 'Reference to the permission table';
 
 
 DROP TRIGGER IF EXISTS role_permissions_role_id_index ON role_permissions;
@@ -29,3 +33,6 @@ INSERT
   INTO role_permissions (role_id, permission_id)
 SELECT role_id, permission_id
   FROM role_permissions_mapping;
+
+
+COMMIT;

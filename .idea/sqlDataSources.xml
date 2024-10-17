@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DdlMappings">
     <mapping uuid="55b4858f-4903-4071-adea-a61c8522cfe3" name="DDL Mapping">
-      <data-sources db="46ea76b3-cd58-4891-8673-115ac937b397" ddl="532f685a-1a18-42ae-91fd-f38ff968295f" />
+      <data-sources db="47990f5f-f487-4f32-ba21-ada413d89698" ddl="532f685a-1a18-42ae-91fd-f38ff968295f" />
       <scope>
         <node kind="database" qname="virtual_file_system">
           <node kind="schema" qname="@" />
@@ -22,6 +22,7 @@
               <option value="file://$PROJECT_DIR$/week-7/project/ddl" />
             </array>
           </option>
+          <option name="group" value="virtual_file_system" />
           <option name="outPath" value="$PROJECT_DIR$/week-7/project/ddl" />
           <option name="outLayout" value="File per object with order.groovy" />
           <option name="scriptOptions">

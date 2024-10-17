@@ -1,3 +1,5 @@
+BEGIN;
+
 DROP VIEW IF EXISTS user_role_resource_access_view;
 
 CREATE OR REPLACE VIEW user_role_resource_access_view AS
@@ -16,3 +18,5 @@ COMMENT ON COLUMN user_role_resource_access_view.manage IS 'can manage the resou
 COMMENT ON COLUMN user_role_resource_access_view.read IS 'can read the resource';
 COMMENT ON COLUMN user_role_resource_access_view.write IS 'can write the resource';
 COMMENT ON COLUMN user_role_resource_access_view.delete IS 'can delete the resource';
+
+COMMIT;

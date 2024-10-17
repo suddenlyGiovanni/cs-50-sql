@@ -59,4 +59,4 @@ EXECUTE FUNCTION users_soft_delete();
 
 COMMENT ON TRIGGER users_soft_delete_trigger ON users IS 'Users soft delete trigger';
 
-END;
+COMMIT;
