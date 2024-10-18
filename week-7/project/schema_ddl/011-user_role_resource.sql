@@ -1,6 +1,6 @@
 BEGIN;
 
-DROP TABLE IF EXISTS user_role_resource;
+DROP TABLE IF EXISTS user_role_resource CASCADE;
 
 CREATE TABLE IF NOT EXISTS user_role_resource (
     resource_id INTEGER NOT NULL,

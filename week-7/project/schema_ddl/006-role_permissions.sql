@@ -1,6 +1,6 @@
 BEGIN;
 
-DROP TABLE IF EXISTS role_permissions;
+DROP TABLE IF EXISTS role_permissions CASCADE;
 
 CREATE TABLE IF NOT EXISTS role_permissions (
     role_id       SMALLINT NOT NULL,

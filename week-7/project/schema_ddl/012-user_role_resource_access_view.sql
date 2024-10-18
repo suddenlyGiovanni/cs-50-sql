@@ -1,6 +1,6 @@
 BEGIN;
 
-DROP VIEW IF EXISTS user_role_resource_access_view;
+DROP VIEW IF EXISTS user_role_resource_access_view CASCADE;
 
 CREATE OR REPLACE VIEW user_role_resource_access_view AS
 SELECT user_role_resource.*

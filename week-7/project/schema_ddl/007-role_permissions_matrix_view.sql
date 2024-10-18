@@ -1,6 +1,6 @@
 BEGIN;
 
-DROP VIEW IF EXISTS role_permissions_matrix_view;
+DROP VIEW IF EXISTS role_permissions_matrix_view CASCADE;
 
 CREATE OR REPLACE VIEW role_permissions_matrix_view AS
 SELECT r.name                     AS role

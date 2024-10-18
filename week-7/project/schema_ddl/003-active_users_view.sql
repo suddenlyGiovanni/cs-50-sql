@@ -1,5 +1,5 @@
 BEGIN;
-DROP VIEW IF EXISTS active_users_view;
+DROP VIEW IF EXISTS active_users_view CASCADE;
 
 CREATE VIEW active_users_view AS
 SELECT id

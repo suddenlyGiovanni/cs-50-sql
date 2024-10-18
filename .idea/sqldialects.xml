@@ -112,9 +112,10 @@
     <file url="file://$PROJECT_DIR$/week-7/project/queries.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/000-database.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/001-virtual_file_system_schema.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/002-users.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/004-roles.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/005-permissions.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/vacuum.sql" dialect="PostgreSQL" />
     <file url="PROJECT" dialect="SQLite" />
   </component>
