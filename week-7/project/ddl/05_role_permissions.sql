@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS role_permissions_role_id_index ON role_permissions(ro
 INSERT
   INTO role_permissions (role_id, permission_id)
 SELECT role_id, permission_id
-  FROM role_permissions_mapping;
-
+  FROM role_permissions_mapping
+    ON CONFLICT (role_id, permission_id) DO NOTHING;
 
 COMMIT;
