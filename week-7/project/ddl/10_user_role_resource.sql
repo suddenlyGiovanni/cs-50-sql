@@ -1,7 +1,6 @@
 BEGIN;
+
 DROP TABLE IF EXISTS user_role_resource;
-DROP INDEX IF EXISTS user_role_resource_id_index;
-DROP INDEX IF EXISTS user_role_resource_user_id_index;
 
 CREATE TABLE IF NOT EXISTS user_role_resource (
     resource_id INTEGER NOT NULL,
@@ -21,7 +20,10 @@ COMMENT ON COLUMN user_role_resource.resource_id IS 'Reference to the resource t
 COMMENT ON COLUMN user_role_resource.user_id IS 'Reference to the user table';
 COMMENT ON COLUMN user_role_resource.role_id IS 'Reference to the role table';
 
+DROP INDEX IF EXISTS user_role_resource_id_index;
 CREATE INDEX user_role_resource_id_index ON user_role_resource(resource_id);
+
+DROP INDEX IF EXISTS user_role_resource_user_id_index;
 CREATE INDEX user_role_resource_user_id_index ON user_role_resource(user_id);
 
 COMMIT;
