@@ -308,9 +308,13 @@
     <data-source source="LOCAL" name="virtual_file_system@localhost" single-connection="true" group="virtual_file_system" uuid="47990f5f-f487-4f32-ba21-ada413d89698">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
+      <schema-control>AUTOMATIC</schema-control>
       <rewrite-bounds>false</rewrite-bounds>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/virtual_file_system</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="database.postgres.introspect.system.schemas" value="true" />
+      </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$/week-7/project</working-dir>
     </data-source>
   </component>
