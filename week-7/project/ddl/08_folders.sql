@@ -1,8 +1,7 @@
 BEGIN;
+
 DROP TABLE IF EXISTS folders CASCADE;
-DROP INDEX IF EXISTS folders_resource_id_index;
-DROP INDEX IF EXISTS folders_parent_folder_id_index;
-DROP TRIGGER IF EXISTS folders_unique_name_within_parent_trigger ON folders;
+
 
 CREATE TABLE IF NOT EXISTS folders (
     id               SERIAL PRIMARY KEY,
@@ -21,7 +20,10 @@ COMMENT ON COLUMN folders.name IS 'Folder name; has to be unique within the pare
 COMMENT ON COLUMN folders.parent_folder_id IS 'Reference to the parent folder; NULL by default for top level folders';
 
 
+DROP INDEX IF EXISTS folders_resource_id_index;
 CREATE INDEX IF NOT EXISTS folders_resource_id_index ON folders(resource_id);
+
+DROP INDEX IF EXISTS folders_parent_folder_id_index;
 CREATE INDEX IF NOT EXISTS folders_parent_folder_id_index ON folders(parent_folder_id);
 
 
@@ -38,6 +40,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
+DROP TRIGGER IF EXISTS folders_unique_name_within_parent_trigger ON folders;
 CREATE TRIGGER folders_unique_name_within_parent_trigger
     BEFORE INSERT
     ON folders
