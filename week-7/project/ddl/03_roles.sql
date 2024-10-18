@@ -27,7 +27,7 @@ COMMENT ON COLUMN roles.description IS 'What the domain behaviour is attached to
 
 DROP INDEX IF EXISTS roles_role_name_index;
 CREATE INDEX IF NOT EXISTS roles_role_name_index ON roles(id, name);
-
+04
 
 INSERT INTO roles (name, description)
 VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the ability to MODIFY PERMISSIONS.')
