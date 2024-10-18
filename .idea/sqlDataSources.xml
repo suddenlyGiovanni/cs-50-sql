@@ -19,7 +19,7 @@
           <option name="dbmsName" value="POSTGRES" />
           <option name="urls">
             <array>
-              <option value="file://$PROJECT_DIR$/week-7/project/ddl" />
+              <option value="file://$PROJECT_DIR$/week-7/project/schema_ddl" />
             </array>
           </option>
           <option name="group" value="virtual_file_system" />
@@ -28,6 +28,7 @@
           <option name="scriptOptions">
             <map>
               <entry key="CreateIfNotExists" value="1" />
+              <entry key="CreateOrReplace" value="1" />
             </map>
           </option>
         </State>

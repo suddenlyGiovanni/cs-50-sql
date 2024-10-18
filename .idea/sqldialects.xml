@@ -109,22 +109,10 @@
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/schema.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/seed.sql" dialect="MySQL" />
     <file url="file://$PROJECT_DIR$/week-6/problems/sentimental-connect/vacuum.sql" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/00_database.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/01_users.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/02_active_users_view.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/03_roles.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/04_permissions.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/05_role_permissions.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/06_role_permissions_matrix_view.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/07_resources.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/08_folders.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/09_files.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/10_user_role_resource.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/ddl/11_user_role_resource_access_view.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/queries.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema.sql" dialect="PostgreSQL" />
-    <file url="file://$PROJECT_DIR$/week-7/project/vacuum.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/vacuum.sql" dialect="PostgreSQL" />
     <file url="PROJECT" dialect="SQLite" />
   </component>
 </project>
