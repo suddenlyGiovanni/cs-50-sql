@@ -33,7 +33,18 @@
           </option>
           <option name="scopes">
             <map>
-              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/000-database.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/002-users.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/003-active_users_view.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/004-roles.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/005-permissions.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/006-role_permissions.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/007-role_permissions_matrix_view.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/008-resources.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/009-folders.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/010-files.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/011-user_role_resource.sql" value="" />
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl/012-user_role_resource_access_view.sql" value="" />
             </map>
           </option>
         </State>
