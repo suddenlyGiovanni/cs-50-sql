@@ -31,6 +31,11 @@
               <entry key="CreateOrReplace" value="1" />
             </map>
           </option>
+          <option name="scopes">
+            <map>
+              <entry key="$PROJECT_DIR$/week-7/project/schema_ddl" value="" />
+            </map>
+          </option>
         </State>
       </list>
     </option>
