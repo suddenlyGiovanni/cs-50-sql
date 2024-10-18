@@ -1,10 +1,20 @@
 BEGIN;
 
 DROP TABLE IF EXISTS roles;
+
 DROP TYPE IF EXISTS ROLE_TYPE;
+DO
+$$
+    BEGIN
+        IF NOT exists (
+                      SELECT 1
+                        FROM pg_type
+                       WHERE typname = 'ROLE_TYPE'
+                      ) THEN CREATE TYPE ROLE_TYPE AS ENUM ('admin', 'owner', 'editor', 'viewer');
+        END IF;
+    END;
+$$;
 
-
-CREATE TYPE ROLE_TYPE AS ENUM ('admin', 'owner', 'editor', 'viewer');
 
 CREATE TABLE IF NOT EXISTS roles (
     id          SMALLSERIAL PRIMARY KEY,
@@ -23,7 +33,8 @@ INSERT INTO roles (name, description)
 VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the ability to MODIFY PERMISSIONS.')
      , ('owner', 'Can READ, WRITE and DELETE the resource; Automatically assigned to the user creating said resource')
      , ('editor', 'Can READ and WRITE but not delete or manage permissions')
-     , ('viewer', 'Can only VIEW the resource');
+     , ('viewer', 'Can only VIEW the resource')
+    ON CONFLICT (name) DO NOTHING;
 
 CREATE OR REPLACE FUNCTION roles_seal() RETURNS TRIGGER AS
 $$
@@ -33,6 +44,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS roles_seal_trigger ON roles;
 CREATE TRIGGER roles_seal_trigger
     BEFORE INSERT OR UPDATE OR DELETE
     ON roles
