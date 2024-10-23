@@ -41,3 +41,28 @@ $$
         SELECT INTO folder_d_id mkdir('D', _username, _role_type, folder_c_id);
     END
 $$;
+
+
+/*
+* test folder circular dependency
+*/
+DO
+$$
+    BEGIN
+        -- Try to update folder 'A' to have 'D' as its parent
+        UPDATE folders
+           SET parent_folder_id = (
+                                  SELECT id
+                                    FROM folders
+                                   WHERE name = 'D'
+                                  )
+         WHERE name = 'A';
+
+        -- If no exception is thrown, raise an error indicating the test failed
+        RAISE EXCEPTION 'Test failed: Circular dependency was not detected';
+
+    EXCEPTION
+        WHEN OTHERS THEN -- Catch any exception and output the message
+            RAISE NOTICE 'Test passed: Circular dependency detected with error - %', sqlerrm;
+    END
+$$;

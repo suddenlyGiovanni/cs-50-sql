@@ -15,13 +15,11 @@ DROP TYPE IF EXISTS PERMISSION_TYPE CASCADE;
 
 
 -- Drop dangling functions
-DROP FUNCTION IF EXISTS files_validate_unique_name();
-DROP FUNCTION IF EXISTS folders_validate_unique_name();
 DROP FUNCTION IF EXISTS permissions_seal();
 DROP FUNCTION IF EXISTS resource_update_timestamp();
 DROP FUNCTION IF EXISTS roles_seal();
 DROP FUNCTION IF EXISTS users_prevent_created_at_update();
 DROP FUNCTION IF EXISTS users_soft_delete();
-
+DROP FUNCTION IF EXISTS mkdir();
 
 VACUUM;

@@ -12,3 +12,4 @@
 \ir schema_ddl/010-files.sql
 \ir schema_ddl/011-user_role_resource.sql
 \ir schema_ddl/012-user_role_resource_access_view.sql
+\ir seed.sql

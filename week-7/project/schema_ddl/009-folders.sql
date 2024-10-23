@@ -27,4 +27,40 @@ DROP INDEX IF EXISTS folders_parent_folder_name_unique_idx;
 CREATE UNIQUE INDEX folders_parent_folder_name_unique_idx ON folders(parent_folder_id, name);
 COMMENT ON INDEX folders_parent_folder_name_unique_idx IS 'Unique index to enforce the unique folder name within the parent folder; Enables fast lookups for the folder name within the parent folder';
 
+
+
+CREATE OR REPLACE FUNCTION prevent_folders_circular_dependency() RETURNS TRIGGER
+    LANGUAGE plpgsql AS
+$$
+BEGIN
+    -- Recursively check the parent chain to ensure there's no circular dependency
+    IF exists (
+              WITH RECURSIVE folder_ancestors AS (
+                                                 SELECT parent_folder_id
+                                                   FROM folders
+                                                  WHERE folders.id = new.parent_folder_id
+                                                  UNION ALL
+                                                 SELECT folders.parent_folder_id
+                                                   FROM folders
+                                                       INNER JOIN folder_ancestors ON folders.id = folder_ancestors.parent_folder_id
+                                                 )
+            SELECT 1
+              FROM folders
+             WHERE folders.parent_folder_id = new.id
+              ) THEN
+        RAISE EXCEPTION 'Circular dependency detected: folder id "%" cannot be its own ancestor', new.id;
+    END IF;
+    RETURN new;
+END;
+$$;
+COMMENT ON FUNCTION prevent_folders_circular_dependency IS 'Prevent circular dependency in the folders table';
+
+
+CREATE OR REPLACE TRIGGER prevent_circular_dependency_trigger
+    BEFORE INSERT OR UPDATE OF parent_folder_id
+    ON folders
+    FOR EACH ROW
+EXECUTE FUNCTION prevent_folders_circular_dependency();
+
+
 COMMIT;
