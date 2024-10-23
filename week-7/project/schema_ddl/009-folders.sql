@@ -2,11 +2,10 @@ BEGIN;
 
 DROP TABLE IF EXISTS folders CASCADE;
 
-
 CREATE TABLE IF NOT EXISTS folders (
     id               SERIAL PRIMARY KEY,
     resource_id      INTEGER      NOT NULL UNIQUE,
-    parent_folder_id INTEGER DEFAULT NULL REFERENCES folders
+    parent_folder_id INTEGER DEFAULT NULL CHECK ( parent_folder_id != id ) REFERENCES folders
         ON DELETE CASCADE,
     name             VARCHAR(255) NOT NULL,
     FOREIGN KEY (resource_id) REFERENCES resources(id)
@@ -17,35 +16,15 @@ COMMENT ON TABLE folders IS 'Folders are a kind of specialized resources that re
 COMMENT ON COLUMN folders.id IS 'Folder ID';
 COMMENT ON COLUMN folders.resource_id IS 'Reference to the resource table';
 COMMENT ON COLUMN folders.name IS 'Folder name; has to be unique within the parent folder';
-COMMENT ON COLUMN folders.parent_folder_id IS 'Reference to the parent folder; NULL by default for top level folders';
+COMMENT ON COLUMN folders.parent_folder_id IS 'Reference to the parent folder; NULL by default for top level folders; A Folder cannot be its own parent';
 
 
 DROP INDEX IF EXISTS folders_resource_id_index;
 CREATE INDEX IF NOT EXISTS folders_resource_id_index ON folders(resource_id);
+COMMENT ON INDEX folders_resource_id_index IS 'Index to enable fast lookups for the resource_id column';
 
-DROP INDEX IF EXISTS folders_parent_folder_id_index;
-CREATE INDEX IF NOT EXISTS folders_parent_folder_id_index ON folders(parent_folder_id);
-
-
-CREATE OR REPLACE FUNCTION folders_validate_unique_name() RETURNS TRIGGER AS
-$$
-BEGIN
-    IF exists(
-             SELECT 1 FROM folders f WHERE new.parent_folder_id = f.parent_folder_id AND f.name = new.name
-             ) THEN
-        RAISE EXCEPTION 'Folder name must be unique within the parent folder';
-    END IF;
-    RETURN new;
-END;
-$$ LANGUAGE plpgsql;
-
-
-DROP TRIGGER IF EXISTS folders_unique_name_within_parent_trigger ON folders;
-CREATE TRIGGER folders_unique_name_within_parent_trigger
-    BEFORE INSERT
-    ON folders
-    FOR EACH ROW
-EXECUTE FUNCTION folders_validate_unique_name();
-
+DROP INDEX IF EXISTS folders_parent_folder_name_unique_idx;
+CREATE UNIQUE INDEX folders_parent_folder_name_unique_idx ON folders(parent_folder_id, name);
+COMMENT ON INDEX folders_parent_folder_name_unique_idx IS 'Unique index to enforce the unique folder name within the parent folder; Enables fast lookups for the folder name within the parent folder';
 
 COMMIT;
