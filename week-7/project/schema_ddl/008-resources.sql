@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS resources (
     updated_at TIMESTAMP     NOT NULL DEFAULT current_timestamp,
     created_by INTEGER       NOT NULL,
     updated_by INTEGER       NOT NULL,
-    FOREIGN KEY (created_by) REFERENCES users(id),
-    FOREIGN KEY (updated_by) REFERENCES users(id)
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 COMMENT ON COLUMN resources.created_at IS 'The resource creation timestamp; auto-generated on creation';
