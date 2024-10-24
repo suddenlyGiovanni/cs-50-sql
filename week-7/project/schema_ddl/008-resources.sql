@@ -180,3 +180,56 @@ Parameters:
 Returns:
 - INTEGER: The ID of the newly created folder
 ';
+
+
+
+CREATE OR REPLACE FUNCTION chmod(
+    resource_id INTEGER,
+    username TEXT,
+    role_type ROLE_TYPE
+) RETURNS VOID
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    _role_id SMALLINT := (
+    SELECT roles.id
+      FROM roles
+     WHERE roles.name = chmod.role_type
+                         );
+    _user_id INTEGER;
+BEGIN
+
+    -- Validate and retrieve user_id
+    IF NOT exists (
+                  SELECT 1
+                    FROM users
+                   WHERE users.username = chmod.username
+                  ) THEN
+        RAISE EXCEPTION 'User "%" does not exist', chmod.username;
+    ELSE
+        SELECT users.id INTO _user_id FROM users WHERE users.username = chmod.username;
+    END IF;
+
+    -- Validate role_id
+    IF _role_id IS NULL THEN RAISE EXCEPTION 'Role % does not exist', chmod.role_type; END IF;
+
+    -- Validate resource_id
+    IF NOT exists (
+                  SELECT 1
+                    FROM resources
+                   WHERE resources.id = chmod.resource_id
+                  ) THEN
+        RAISE EXCEPTION 'Resource with id % does not exist', chmod.resource_id;
+    END IF;
+
+
+    -- Insert or update the user-role-resource relationship
+    INSERT INTO user_role_resource (resource_id, user_id, role_id)
+    VALUES (chmod.resource_id, _user_id, _role_id)
+        ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
+    RAISE NOTICE 'Role "%" assigned to user "%" for resource id "%"', chmod.role_type, chmod.username, chmod.resource_id;
+
+END;
+$$;
+COMMENT ON FUNCTION chmod IS 'Change the mode of a file or folder';
