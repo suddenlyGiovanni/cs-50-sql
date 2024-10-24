@@ -51,6 +51,39 @@ CREATE TRIGGER resources_updated_at_trigger
     FOR EACH ROW
 EXECUTE FUNCTION resource_update_timestamp();
 
+
+
+CREATE OR REPLACE FUNCTION resource_assign_owner_role_on_creation() RETURNS TRIGGER
+    LANGUAGE plpgsql AS
+$$
+DECLARE
+    _user_id     INTEGER  := new.created_by;
+    _resource_id INTEGER  := new.id;
+    _role_id     SMALLINT := (
+                             SELECT id
+                               FROM roles
+                              WHERE name = 'owner'
+                             );
+BEGIN
+    -- Insert the user-role-resource mapping
+    -- If it fails, the entire transaction will be rolled back
+    INSERT INTO user_role_resource (resource_id, user_id, role_id) VALUES (_resource_id, _user_id, _role_id);
+    RETURN new;
+END;
+$$;
+COMMENT ON FUNCTION resource_assign_owner_role_on_creation() IS 'Automatically assigns the "owner" role to a resource for the user who created it.';
+
+
+
+DROP TRIGGER IF EXISTS resources_assign_owner_role_trigger ON resources;
+CREATE TRIGGER resources_assign_owner_role_trigger
+    AFTER INSERT
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION resource_assign_owner_role_on_creation();
+COMMENT ON TRIGGER resources_assign_owner_role_trigger ON resources IS 'Trigger to automatically assign the "owner" role to the user who creates a resource.';
+
+
 COMMIT;
 
 
