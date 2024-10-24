@@ -9,36 +9,36 @@ VALUES ('user_1', 'user.1@email.com', 'e09b4a4e5ad92e5a70aca91b9e382867246b33db'
  * Create a folder structure as follows for user_1:
  *
  * A
- * ├── B1
- * │   └── C
- * │       └── D
- * └── B2
+ * ├── AA_1
+ * │   └── AAA_1
+ * │       └── AAAA_1
+ * └── AA_2
 */
 DO
 $$
     DECLARE
-        folder_a_id  INT;
-        folder_b1_id INT;
-        folder_b2_id INT;
-        folder_c_id  INT;
-        folder_d_id  INT;
-        _role_type   ROLE_TYPE := 'owner';
-        _username    TEXT      := 'user_1';
+        folder_a_id      INT;
+        folder_aa_1_id   INT;
+        folder_aa_2_id   INT;
+        folder_aaa_1_id  INT;
+        folder_aaaa_1_id INT;
+        _role_type       ROLE_TYPE := 'owner';
+        _username        TEXT      := 'user_1';
     BEGIN
         -- Create folder "A"
         SELECT INTO folder_a_id mkdir('A', _username, _role_type);
 
         -- Create sub-folder "B1" under folder "A"
-        SELECT INTO folder_b1_id mkdir('B1', _username, _role_type, folder_a_id);
+        SELECT INTO folder_aa_1_id mkdir('AA_1', _username, _role_type, folder_a_id);
 
-        -- Create sub-folder "B2" under folder "A"
-        SELECT INTO folder_b2_id mkdir('B2', _username, _role_type, folder_a_id);
+        -- Create sub-folder "AA_2" under folder "A"
+        SELECT INTO folder_aa_2_id mkdir('AA_2', _username, _role_type, folder_a_id);
 
-        -- Create sub-folder "C" under folder "B1"
-        SELECT INTO folder_c_id mkdir('C', _username, _role_type, folder_b1_id);
+        -- Create sub-folder "AAA_1" under folder "AA_2"
+        SELECT INTO folder_aaa_1_id mkdir('AAA_1', _username, _role_type, folder_aa_1_id);
 
-        -- Create sub-folder "D" under folder "C"
-        SELECT INTO folder_d_id mkdir('D', _username, _role_type, folder_c_id);
+        -- Create sub-folder "AAAA_1" under folder "AAA_1"
+        SELECT INTO folder_aaaa_1_id mkdir('AAAA_1', _username, _role_type, folder_aaa_1_id);
     END
 $$;
 
@@ -49,12 +49,26 @@ $$;
 DO
 $$
     BEGIN
-        -- Try to update folder 'A' to have 'D' as its parent
+
+        /*
+         *  Cyclic Graph Test
+         *
+         *  A
+         *  ├── AA_1
+         *  │    └── AAA_1
+         *  │         └── AAAA_1
+         *  │              │
+         *  └──────────────┘
+         *              ▲
+         *              │
+         *              └── back to A
+         *
+         */
         UPDATE folders
            SET parent_folder_id = (
                                   SELECT id
                                     FROM folders
-                                   WHERE name = 'D'
+                                   WHERE name = 'AAAA_1'
                                   )
          WHERE name = 'A';
 
@@ -64,5 +78,24 @@ $$
     EXCEPTION
         WHEN OTHERS THEN -- Catch any exception and output the message
             RAISE NOTICE 'Test passed: Circular dependency detected with error - %', sqlerrm;
+    END
+$$;
+
+
+/*
+ * Create a folder structure as follows for user_2:
+ *
+ * B -|
+ *
+*/
+DO
+$$
+    DECLARE
+        folder_b_id INT;
+        _role_type  ROLE_TYPE := 'owner';
+        _username   TEXT      := 'user_2';
+    BEGIN
+        -- Create folder "B"
+        SELECT INTO folder_b_id mkdir('B', _username, _role_type);
     END
 $$;
