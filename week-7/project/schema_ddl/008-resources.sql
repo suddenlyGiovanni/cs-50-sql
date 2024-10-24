@@ -90,7 +90,7 @@ COMMIT;
 CREATE OR REPLACE FUNCTION mkdir(
     folder_name TEXT,
     username TEXT,
-    role_type ROLE_TYPE,
+    role_type ROLE_TYPE DEFAULT 'owner',
     parent_folder_id INTEGER DEFAULT NULL
 ) RETURNS INTEGER
     LANGUAGE plpgsql AS
@@ -157,12 +157,13 @@ BEGIN
        VALUES (_resource_id, mkdir.parent_folder_id, mkdir.folder_name)
     RETURNING folders.id INTO _folder_id;
 
-    -- Add corresponding role-based access for the new resource
-    INSERT INTO user_role_resource (resource_id, user_id, role_id) VALUES (_resource_id, _user_id, _role_id);
+    -- Add corresponding role-based access for the new resource if different from the automatically assigned one 'owner'
+    IF mkdir.role_type != 'owner' THEN
+        INSERT INTO user_role_resource (resource_id, user_id, role_id) VALUES (_resource_id, _user_id, _role_id);
+    END IF;
 
 
     -- TODO: needs to validate the authorisation of the user to create the folder
-    -- TODO: needs to return the folder_id?
 
     RETURN _folder_id;
 
@@ -174,7 +175,7 @@ COMMENT ON FUNCTION mkdir IS 'Create a new folder for a user with the specified 
 Parameters:
 - folder_name (TEXT): The name of the new folder to be created
 - username (TEXT): The unique username of the user who will own the folder
-- role_type (ROLE_TYPE): The role type to be assigned to the folder
+- role_type (ROLE_TYPE, DEFAULT "owner"): The role type to be assigned to the folder
 - parent_folder_id (INTEGER, DEFAULT NULL): The ID of the parent folder, if any
 Returns:
 - INTEGER: The ID of the newly created folder

@@ -22,23 +22,22 @@ $$
         folder_aa_2_id   INT;
         folder_aaa_1_id  INT;
         folder_aaaa_1_id INT;
-        _role_type       ROLE_TYPE := 'owner';
-        _username        TEXT      := 'user_1';
+        _username        TEXT := 'user_1';
     BEGIN
         -- Create folder "A"
-        SELECT INTO folder_a_id mkdir('A', _username, _role_type);
+        SELECT INTO folder_a_id mkdir('A', _username);
 
         -- Create sub-folder "B1" under folder "A"
-        SELECT INTO folder_aa_1_id mkdir('AA_1', _username, _role_type, folder_a_id);
+        SELECT INTO folder_aa_1_id mkdir('AA_1', _username, parent_folder_id => folder_a_id);
 
         -- Create sub-folder "AA_2" under folder "A"
-        SELECT INTO folder_aa_2_id mkdir('AA_2', _username, _role_type, folder_a_id);
+        SELECT INTO folder_aa_2_id mkdir('AA_2', _username, parent_folder_id => folder_a_id);
 
         -- Create sub-folder "AAA_1" under folder "AA_2"
-        SELECT INTO folder_aaa_1_id mkdir('AAA_1', _username, _role_type, folder_aa_1_id);
+        SELECT INTO folder_aaa_1_id mkdir('AAA_1', _username, parent_folder_id => folder_aa_1_id);
 
         -- Create sub-folder "AAAA_1" under folder "AAA_1"
-        SELECT INTO folder_aaaa_1_id mkdir('AAAA_1', _username, _role_type, folder_aaa_1_id);
+        SELECT INTO folder_aaaa_1_id mkdir('AAAA_1', _username, parent_folder_id => folder_aaa_1_id);
     END
 $$;
 
@@ -92,10 +91,9 @@ DO
 $$
     DECLARE
         folder_b_id INT;
-        _role_type  ROLE_TYPE := 'owner';
-        _username   TEXT      := 'user_2';
+        _username   TEXT := 'user_2';
     BEGIN
         -- Create folder "B"
-        SELECT INTO folder_b_id mkdir('B', _username, _role_type);
+        SELECT INTO folder_b_id mkdir('B', _username);
     END
 $$;
