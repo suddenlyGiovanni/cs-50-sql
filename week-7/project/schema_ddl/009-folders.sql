@@ -29,6 +29,32 @@ COMMENT ON INDEX folders_parent_folder_name_unique_idx IS 'Unique index to enfor
 
 
 
+CREATE OR REPLACE FUNCTION validate_parent_folder_existence() RETURNS TRIGGER AS
+$$
+BEGIN
+    -- check if the parent is NULL, indicating it is a top-level folder; skip the check as it is valid
+    IF new.parent_folder_id IS NOT NULL THEN
+        -- validate that the specified parent folder exists
+        IF NOT exists(
+                     SELECT 1
+                       FROM folders
+                      WHERE folders.id = new.parent_folder_id
+                     ) THEN
+            RAISE EXCEPTION 'Parent folder with id "%" does not exist', new.parent_folder_id;
+        END IF;
+    END IF;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION validate_parent_folder_existence IS 'Ensure that the parent folder exists for the folder being inserted or updated';
+
+CREATE OR REPLACE TRIGGER validate_parent_folder_existence_trigger
+    BEFORE INSERT OR UPDATE OF parent_folder_id
+    ON folders
+    FOR EACH ROW
+EXECUTE FUNCTION validate_parent_folder_existence();
+
+
 CREATE OR REPLACE FUNCTION prevent_folders_circular_dependency() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$
