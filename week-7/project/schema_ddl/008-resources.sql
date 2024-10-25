@@ -187,13 +187,7 @@ CREATE OR REPLACE FUNCTION chmod(
     resource INTEGER,
     username TEXT,
     role_type ROLE_TYPE
-)
-    RETURNS TABLE (
-        RESOURCE_ID INTEGER,
-        USER_ID     INTEGER,
-        ROLE_ID     SMALLINT
-    )
-AS
+) RETURNS SETOF public.USER_ROLE_RESOURCE AS
 $$
 DECLARE
     _role_id SMALLINT := (
@@ -238,6 +232,7 @@ BEGIN
 
     RETURN QUERY SELECT * FROM user_role_resource WHERE resource_id = chmod.resource AND user_id = _user_id;
 END;
+
 
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION chmod IS 'Change user role attached to a resource.

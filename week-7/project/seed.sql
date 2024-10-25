@@ -100,4 +100,4 @@ $$;
 
 
 
-SELECT virtual_file_system.public.chmod(1, 'user_2', 'editor')
+SELECT virtual_file_system.public.chmod(1, 'user_2', 'admin');
