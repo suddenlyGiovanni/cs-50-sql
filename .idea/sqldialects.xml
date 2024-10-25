@@ -120,6 +120,8 @@
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/010-files.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/012-user_role_resource_access_view.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/013-resources_view.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/014-mkdir.sql" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/week-7/project/schema_ddl/015-chmod.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/seed.sql" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/week-7/project/vacuum.sql" dialect="PostgreSQL" />
     <file url="PROJECT" dialect="SQLite" />
