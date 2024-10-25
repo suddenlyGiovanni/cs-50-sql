@@ -184,10 +184,10 @@ Returns:
 
 
 CREATE OR REPLACE FUNCTION chmod(
-    resource_id INTEGER,
+    resource INTEGER,
     username TEXT,
     role_type ROLE_TYPE
-) RETURNS VOID
+) RETURNS SETOF USER_ROLE_RESOURCE
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -217,19 +217,31 @@ BEGIN
     IF NOT exists (
                   SELECT 1
                     FROM resources
-                   WHERE resources.id = chmod.resource_id
+                   WHERE resources.id = chmod.resource
                   ) THEN
-        RAISE EXCEPTION 'Resource with id % does not exist', chmod.resource_id;
+        RAISE EXCEPTION 'Resource with id % does not exist', chmod.resource;
     END IF;
 
 
     -- Insert or update the user-role-resource relationship
     INSERT INTO user_role_resource (resource_id, user_id, role_id)
-    VALUES (chmod.resource_id, _user_id, _role_id)
+    VALUES (chmod.resource, _user_id, _role_id)
         ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 
-    RAISE NOTICE 'Role "%" assigned to user "%" for resource id "%"', chmod.role_type, chmod.username, chmod.resource_id;
+    RAISE NOTICE 'Role "%" assigned to user "%" for resource id "%"', chmod.role_type, chmod.username, chmod.resource;
+
+    RETURN QUERY (
+                 SELECT * FROM user_role_resource WHERE resource_id = chmod.resource AND user_id = _user_id
+                 );
 
 END;
 $$;
-COMMENT ON FUNCTION chmod IS 'Change the mode of a file or folder';
+COMMENT ON FUNCTION chmod IS 'Change user role attached to a resource.
+
+Parameters:
+- resource (INTEGER): The ID of the resource (file or folder) to which the role should be assigned.
+- username (TEXT): The unique username of the user to whom the role should be assigned.
+- role_type (ROLE_TYPE): The role type to be assigned to the user.
+
+Returns:
+- the modified user_role_resource record';

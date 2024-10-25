@@ -97,3 +97,7 @@ $$
         SELECT INTO folder_b_id mkdir('B', _username);
     END
 $$;
+
+
+
+SELECT virtual_file_system.public.chmod(1, 'user_2', 'editor')
