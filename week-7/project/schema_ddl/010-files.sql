@@ -35,4 +35,10 @@ DROP INDEX IF EXISTS files_name_unique_within_parent_folder_index;
 CREATE UNIQUE INDEX files_name_unique_within_parent_folder_index ON files(parent_folder_id, name);
 COMMENT ON INDEX files_name_unique_within_parent_folder_index IS 'Unique index to enforce the unique files name within the parent folder; Enables fast lookups for the files name within the parent folder';
 
+CREATE OR REPLACE TRIGGER validate_file_parent_folder_existence_trigger
+    BEFORE INSERT OR UPDATE OF parent_folder_id
+    ON files
+    FOR EACH ROW
+EXECUTE FUNCTION validate_parent_folder_existence();
+
 COMMIT;
