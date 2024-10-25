@@ -3,9 +3,9 @@ BEGIN;
 DROP TABLE IF EXISTS user_role_resource CASCADE;
 
 CREATE TABLE IF NOT EXISTS user_role_resource (
-    resource_id INTEGER NOT NULL,
-    user_id     INTEGER NOT NULL,
-    role_id     INTEGER NOT NULL,
+    resource_id INTEGER  NOT NULL,
+    user_id     INTEGER  NOT NULL,
+    role_id     SMALLINT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE,
     FOREIGN KEY (role_id) REFERENCES roles(id)
