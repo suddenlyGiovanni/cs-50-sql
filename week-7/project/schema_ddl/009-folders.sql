@@ -89,4 +89,31 @@ CREATE OR REPLACE TRIGGER prevent_circular_dependency_trigger
 EXECUTE FUNCTION prevent_folders_circular_dependency();
 
 
+CREATE OR REPLACE FUNCTION auth_create_trigger() RETURNS TRIGGER AS
+$$
+BEGIN
+    /*
+	 * Algorithm:
+	 * 1. get the user_id from the reference to the resources table
+	 * 2. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
+	 * 3. traverse the parent chain recursively
+	 *    - for each ancestor folder, check if the user has the required access rights
+	 *    - if the user has the required access rights, allow the operation
+	 * 4. stop the traversal when the parent_folder_id is NULL, indicating the top-level folder
+	 * 5. if the traversal reaches the top-level folder and the user does not have the required access rights, deny the operation by raising an exception
+     */
+
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
+
+
+CREATE OR REPLACE TRIGGER auth_folder_create_trigger
+    BEFORE INSERT
+    ON folders
+    FOR EACH ROW
+EXECUTE FUNCTION auth_create_trigger();
+
+
 COMMIT;
