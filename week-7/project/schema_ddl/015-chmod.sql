@@ -14,6 +14,10 @@ DECLARE
 
 BEGIN
 
+    /*
+     * Argument validation:
+     */
+
     -- Validate and retrieve user_id
     IF NOT exists (
                   SELECT 1
@@ -37,6 +41,11 @@ BEGIN
         RAISE EXCEPTION 'Resource with id % does not exist', chmod.resource;
     END IF;
 
+    /*
+     * Business logic:
+     * - Insert or update the user-role-resource relationship
+     * - Return the modified user_role_resource record
+     */
 
     -- Insert or update the user-role-resource relationship
     INSERT INTO user_role_resource (resource_id, user_id, role_id)

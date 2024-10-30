@@ -4,9 +4,9 @@ DROP VIEW IF EXISTS resources_view CASCADE;
 CREATE VIEW resources_view AS
 SELECT user_role_resource_access_view.resource_id
      , resources.type
-     , coalesce(folders.id, files.id)                             AS id
-     , coalesce(folders.name, files.name)                         AS name
-     , coalesce(folders.parent_folder_id, files.parent_folder_id) AS parent_folder_id
+     , coalesce(folders.id, files.id)     AS id
+     , coalesce(folders.name, files.name) AS name
+     , resources.parent_folder_id
      , files.mime_type
      , files.size
      , files.storage_path

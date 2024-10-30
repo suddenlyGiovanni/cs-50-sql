@@ -11,6 +11,10 @@ DECLARE
     _folder_id   INTEGER;
     _role_id     SMALLINT;
 BEGIN
+    /*
+     * argument validation:
+    */
+
     -- validate folder_name
     IF mkdir.folder_name IS NULL OR mkdir.folder_name = '' THEN
         RAISE EXCEPTION 'Folder name cannot be null or empty string';
@@ -29,7 +33,11 @@ BEGIN
 
     -- validate unique folder name
     IF exists(
-             SELECT 1 FROM folders WHERE folders.parent_folder_id = mkdir.parent_folder_id AND name = mkdir.folder_name
+             SELECT 1
+               FROM resources
+                   JOIN folders ON folders.resource_id = resources.id
+              WHERE resources.parent_folder_id = mkdir.parent_folder_id
+                AND name = mkdir.folder_name
              ) THEN
         RAISE EXCEPTION 'Folder with name "%" already exists in the parent folder', mkdir.folder_name;
     END IF;
@@ -56,28 +64,36 @@ BEGIN
         SELECT roles.id INTO _role_id FROM roles WHERE roles.name = mkdir.role_type;
     END IF;
 
-    -- create a new resource
-       INSERT INTO resources (type, created_by, updated_by)
-       VALUES ('folder', _user_id, _user_id)
+    /*
+     * Core logic:
+     * - create a new resource
+     * - create a new folder
+     * - assign the folder to the user
+     */
+
+    -- Create a new resource
+       INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
+       VALUES ('folder', _user_id, _user_id, mkdir.parent_folder_id)
     RETURNING resources.id INTO _resource_id;
-
-
-    -- Create a new folder
-       INSERT INTO folders (resource_id, parent_folder_id, name)
-       VALUES (_resource_id, mkdir.parent_folder_id, mkdir.folder_name)
-    RETURNING folders.id INTO _folder_id;
-
-    -- Add corresponding role-based access for the new resource if different from the automatically assigned one 'owner'
-    IF mkdir.role_type != 'owner' THEN
-        INSERT INTO user_role_resource (resource_id, user_id, role_id) VALUES (_resource_id, _user_id, _role_id);
-    END IF;
-
 
     -- TODO: needs to validate the authorisation of the user to create the folder
 
+    -- Create a new `folder` resource
+       INSERT INTO folders (name, resource_id)
+       VALUES (mkdir.folder_name, _resource_id)
+    RETURNING folders.id INTO _folder_id;
+
+
+    -- Add corresponding role-based access for the new resource if different from the automatically assigned one 'owner'
+--     IF mkdir.role_type != 'owner' THEN
+--     END IF;
+    INSERT INTO user_role_resource (resource_id, user_id, role_id)
+    VALUES (_folder_id, _user_id, _role_id)
+        ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
     RETURN _folder_id;
 
-END;
+END ;
 $$ LANGUAGE plpgsql;
 
 
