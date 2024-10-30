@@ -47,6 +47,8 @@ $$;
 */
 DO
 $$
+    DECLARE
+        _update_row_count SMALLINT;
     BEGIN
 
         /*
@@ -63,22 +65,45 @@ $$
          *              └── back to A
          *
          */
-        UPDATE folders
-           SET parent_folder_id = (
-                                  SELECT id
-                                    FROM folders
-                                   WHERE name = 'AAAA_1'
-                                  )
-         WHERE name = 'A';
 
-        -- If no exception is thrown, raise an error indicating the test failed
-        RAISE EXCEPTION 'Test failed: Circular dependency was not detected';
+        -- ACT: Attempt to create a circular dependency
+           UPDATE resources
+              SET parent_folder_id = (
+                                     SELECT folders.id
+                                       FROM folders
+                                      WHERE folders.name = 'AAAA_1'
+                                      LIMIT 1
+                                     )
+            WHERE resources.id = (
+                                 SELECT folders.resource_id
+                                   FROM folders
+                                  WHERE folders.name = 'A'
+                                  LIMIT 1
+                                 )
+        RETURNING 1 INTO _update_row_count;
+
+
+        /*
+         * If no exception is thrown, raise an error indicating the test failed
+         *
+         * this statement should never be reached if the UPDATE fails as expected.
+         */
+        IF _update_row_count > 0 THEN
+            RAISE EXCEPTION 'Test failed: Circular dependency was not detected by the validation triggers';
+        END IF;
+
 
     EXCEPTION
         WHEN OTHERS THEN -- Catch any exception and output the message
-            RAISE NOTICE 'Test passed: Circular dependency detected with error - %', sqlerrm;
-    END
-$$;
+            IF sqlerrm = 'Test failed: Circular dependency was not detected by the validation triggers' THEN
+                -- ASSERTION FAILED
+                RAISE NOTICE 'Test failed: Expected circular dependency was not detected by the validation triggers';
+            ELSE
+                -- ASSERTION PASSED
+                RAISE NOTICE 'Test passed: Expected circular dependency detected with error - %', sqlerrm;
+            END IF;
+    END;
+$$ LANGUAGE plpgsql;
 
 
 /*
