@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS mkdir();
 CREATE OR REPLACE FUNCTION mkdir(
     folder_name TEXT,
     username TEXT,
