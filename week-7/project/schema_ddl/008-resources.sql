@@ -66,57 +66,6 @@ CREATE TRIGGER resources_updated_at_trigger
     FOR EACH ROW
 EXECUTE FUNCTION resource_update_timestamp();
 
-
-CREATE OR REPLACE FUNCTION validate_parent_folder_id() RETURNS TRIGGER AS
-$$
-BEGIN
-    /*
-    * A resource can be either a `folder` or a `file` type
-    *
-    * a valid `file` resource must have the parent_folder_ id:
-    * - that must not be null
-    * - must exist in the folder table
-    *
-    * a valid `folder` resource can either be a top level folder or a subfolder:
-    * - a top-level folder must have a null parent_folder_id
-    * - a subfolder must have a valid parent_folder_id that exists in the folder table
-    */
-
-    IF new.type = 'file' THEN
-        IF new.parent_folder_id IS NULL THEN RAISE EXCEPTION 'A file resource must have a parent folder'; END IF;
-        IF NOT exists(
-                     SELECT 1
-                       FROM folders
-                      WHERE folders.id = new.parent_folder_id
-                     ) THEN
-            RAISE EXCEPTION 'Parent folder with id "%" does not exist', new.parent_folder_id;
-        END IF;
-
-
-    ELSIF new.type = 'folder' THEN
-        IF new.parent_folder_id IS NOT NULL THEN
-            IF NOT exists(
-                         SELECT 1
-                           FROM folders
-                          WHERE folders.id = new.parent_folder_id
-                         ) THEN
-                RAISE EXCEPTION 'Parent folder with id "%" does not exist', new.parent_folder_id;
-            END IF;
-        END IF;
-    END IF;
-
-    RETURN new;
-END;
-$$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
-
-CREATE OR REPLACE TRIGGER validate_parent_folder_id_trigger
-    BEFORE INSERT OR UPDATE OF parent_folder_id
-    ON resources
-    FOR EACH ROW
-EXECUTE FUNCTION validate_parent_folder_id();
-
-
 --
 -- CREATE OR REPLACE FUNCTION resource_assign_owner_role_on_creation() RETURNS TRIGGER
 --     LANGUAGE plpgsql AS
@@ -177,40 +126,6 @@ ALTER TABLE resources
     ADD CONSTRAINT fk_parent_folder FOREIGN KEY (parent_folder_id) REFERENCES folders(id)
         ON DELETE CASCADE;
 
-
-
--- CREATE OR REPLACE FUNCTION prevent_folders_circular_dependency() RETURNS TRIGGER
---     LANGUAGE plpgsql AS
--- $$
--- BEGIN
---     -- Recursively check the parent chain to ensure there's no circular dependency
---     IF exists (
---               WITH RECURSIVE folder_ancestors AS (
---                                                  SELECT parent_folder_id
---                                                    FROM folders
---                                                   WHERE folders.id = new.parent_folder_id
---                                                   UNION ALL
---                                                  SELECT folders.parent_folder_id
---                                                    FROM folders
---                                                        INNER JOIN folder_ancestors ON folders.id = folder_ancestors.parent_folder_id
---                                                  )
---             SELECT 1
---               FROM folders
---              WHERE folders.parent_folder_id = new.id
---               ) THEN
---         RAISE EXCEPTION 'Circular dependency detected: folder id "%" cannot be its own ancestor', new.id;
---     END IF;
---     RETURN new;
--- END;
--- $$;
--- COMMENT ON FUNCTION prevent_folders_circular_dependency IS 'Prevent circular dependency in the folders table';
-
-
--- CREATE OR REPLACE TRIGGER prevent_circular_dependency_trigger
---     BEFORE INSERT OR UPDATE OF parent_folder_id
---     ON folders
---     FOR EACH ROW
--- EXECUTE FUNCTION prevent_folders_circular_dependency();
 
 
 -- CREATE OR REPLACE FUNCTION auth_create_trigger() RETURNS TRIGGER AS
