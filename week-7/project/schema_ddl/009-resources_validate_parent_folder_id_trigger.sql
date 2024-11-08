@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION validate_parent_folder_id() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION resources_validate_parent_folder_id() RETURNS TRIGGER AS
 $$
 BEGIN
     /*
@@ -39,10 +39,10 @@ BEGIN
     RETURN new;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
+COMMENT ON FUNCTION resources_validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
 
-CREATE OR REPLACE TRIGGER validate_parent_folder_id_trigger
+CREATE OR REPLACE TRIGGER resources_validate_parent_folder_id_trigger
     BEFORE INSERT OR UPDATE OF parent_folder_id
     ON resources
     FOR EACH ROW
-EXECUTE FUNCTION validate_parent_folder_id();
+EXECUTE FUNCTION resources_validate_parent_folder_id();
