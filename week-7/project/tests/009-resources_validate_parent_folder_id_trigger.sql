@@ -67,6 +67,7 @@ $$
             WHEN OTHERS THEN RAISE NOTICE 'Test passed "Insert a FOLDER with a non-existent parent folder (should fail)": Expected error - %', sqlerrm;
         END;
 
+        -- DESCRIBE: File  validation:
         -- Test: Insert a file with a valid parent folder
         BEGIN
                INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
