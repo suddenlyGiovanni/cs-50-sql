@@ -26,5 +26,6 @@ DROP FUNCTION IF EXISTS virtual_file_system.public.mkdir();
 DROP FUNCTION IF EXISTS virtual_file_system.public.chmod();
 DROP FUNCTION IF EXISTS virtual_file_system.public.validate_file_parent_folder_existence();
 DROP FUNCTION IF EXISTS virtual_file_system.public.validate_parent_folder_existence();
+DROP FUNCTION IF EXISTS virtual_file_system.public.validate_parent_folder_id();
 
 VACUUM;
