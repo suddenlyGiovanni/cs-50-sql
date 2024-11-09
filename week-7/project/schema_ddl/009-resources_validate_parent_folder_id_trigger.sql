@@ -16,20 +16,17 @@ BEGIN
     IF new.type = 'file' THEN
         IF new.parent_folder_id IS NULL THEN RAISE EXCEPTION 'A file resource must have a parent folder'; END IF;
         IF NOT exists(
-                     SELECT 1
-                       FROM folders
-                      WHERE folders.id = new.parent_folder_id
+                     SELECT 1 FROM resources WHERE resources.id = new.parent_folder_id AND resources.type = 'folder'
                      ) THEN
             RAISE EXCEPTION 'Parent folder with id "%" does not exist', new.parent_folder_id;
+
         END IF;
 
 
     ELSIF new.type = 'folder' THEN
         IF new.parent_folder_id IS NOT NULL THEN
             IF NOT exists(
-                         SELECT 1
-                           FROM folders
-                          WHERE folders.id = new.parent_folder_id
+                         SELECT 1 FROM resources WHERE resources.id = new.parent_folder_id AND resources.type = 'folder'
                          ) THEN
                 RAISE EXCEPTION 'Parent folder with id "%" does not exist', new.parent_folder_id;
             END IF;

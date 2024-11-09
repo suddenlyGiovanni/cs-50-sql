@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS resources (
     updated_at       TIMESTAMP     NOT NULL DEFAULT current_timestamp, -- auto-updated on every update
     created_by       INTEGER       NOT NULL,
     updated_by       INTEGER       NOT NULL,
-    parent_folder_id INTEGER,                                          -- Initially no foreign key constraint
+    parent_folder_id INTEGER REFERENCES resources(id),                 -- Initially no foreign key constraint
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT check_parent_folder_id_nullability CHECK ( (type = 'file' AND parent_folder_id IS NOT NULL) OR
@@ -119,13 +119,6 @@ DROP INDEX IF EXISTS folders_resource_id_index;
 DROP INDEX IF EXISTS folders_parent_folder_name_unique_idx;
 -- CREATE UNIQUE INDEX folders_parent_folder_name_unique_idx ON folders(parent_folder_id, name);
 -- COMMENT ON INDEX folders_parent_folder_name_unique_idx IS 'Unique index to enforce the unique folder name within the parent folder; Enables fast lookups for the folder name within the parent folder';
-
-
--- Now adding the foreign key constraint to the resources table
-ALTER TABLE resources
-    ADD CONSTRAINT fk_parent_folder FOREIGN KEY (parent_folder_id) REFERENCES folders(id)
-        ON DELETE CASCADE;
-
 
 
 -- CREATE OR REPLACE FUNCTION auth_create_trigger() RETURNS TRIGGER AS
