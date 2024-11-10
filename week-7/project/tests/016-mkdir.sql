@@ -7,6 +7,7 @@
  * │   └── _folder_aaa_1
  * │       └── _folder_aaaa_1
  * └── _folder_aa_2
+* _folder_b
 */
 DO
 $$
@@ -31,6 +32,14 @@ $$
         _folder_aa_2                VARCHAR := 'test_folder_' || _random_uuid || '_aa_2';
         _folder_aaa_1               VARCHAR := 'test_folder_' || _random_uuid || '_aaa_1';
         _folder_aaaa_1              VARCHAR := 'test_folder_' || _random_uuid || '_aaaa_1';
+
+
+        -- Additional folders for testing
+        _resources_folder_b_id      INT;
+        _resources_folder_null_id   INT;
+        _folder_b                   VARCHAR := 'test_folder_' || _random_uuid || '_b';
+        non_existent_user           VARCHAR := 'non_existent_user_' || _random_uuid;
+        non_existent_role           VARCHAR := 'non_existent_role';
 
     BEGIN
         -- Outer block to handle exceptions and ensure cleanup
@@ -153,15 +162,15 @@ $$
             END;
 
 
-            -- Act: Create sub-folder "_folder_aa_2" under folder "_folder_a"
-            SELECT INTO _resources_folder_aa_2_id
-                   mkdir(_folder_aa_2, _user_name, 'editor'::ROLE_TYPE, _resources_folder_a_id);
+            -- Act: Create folder "_folder_b" with a different role type
+            SELECT INTO _resources_folder_b_id
+                   mkdir(_folder_b, _user_name, 'editor'::ROLE_TYPE, NULL);
 
-            -- Assert: Check if resource for "_folder_aa_2" was created successfully with the role "editor"
+            -- Test 7: Check if resource for "_folder_aa_2" was created successfully with the role "editor"
             IF exists(
                 SELECT 1
                   FROM virtual_file_system.public.user_role_resource uur
-                 WHERE uur.resource_id = _resources_folder_aa_2_id
+                 WHERE uur.resource_id = _resources_folder_b_id
                    AND uur.user_id = _user_id
                    AND uur.role_id = (
                      SELECT roles.id
@@ -169,10 +178,25 @@ $$
                       WHERE roles.name = 'editor'
                                      )
                      ) THEN
-                RAISE NOTICE 'Test 7 passed "Check if resource for `_folder_aa_2` was created successfully with the role editor"';
+                RAISE NOTICE 'Test 7 passed "Check if resource for `_folder_b` was created successfully with the role editor"';
             ELSE
-                RAISE EXCEPTION 'Test 8 failed "Check if resource for `_folder_aa_2` was created successfully with the role editor"';
+                RAISE EXCEPTION 'Test 7 failed "Check if resource for `_folder_b` was created successfully with the role editor"';
             END IF;
+
+
+            -- Test 8: Try to create a folder with NULL name
+            BEGIN
+                SELECT INTO _resources_folder_null_id
+                       mkdir(NULL, _user_name, 'owner'::ROLE_TYPE, NULL);
+                RAISE EXCEPTION 'Test 8 failed: "Validation for NULL folder name did not raise exception"';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm = 'Folder name cannot be null or empty string' THEN
+                    RAISE NOTICE 'Test 8 passed: "Validation for NULL folder name raised correct exception"';
+                ELSE
+                    RAISE NOTICE 'Test 8 failed: "Validation for NULL folder name raised unexpected exception: %"', sqlerrm;
+                END IF;
+            END;
+
 
             -- Assert:
             -- Test 5: Check if resource for "_folder_aa_2" was created successfully
@@ -209,6 +233,8 @@ $$
                      WHERE f.resource_id IN (
                          -- _resources_folder_aaaa_1_id,
                          -- _resources_folder_aaa_1_id,
+                                             _resources_folder_null_id,
+                                             _resources_folder_b_id,
                                              _resources_folder_aa_2_id,
                                              _resources_folder_aa_1_id,
                                              _resources_folder_a_id);
