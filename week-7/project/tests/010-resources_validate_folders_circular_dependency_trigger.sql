@@ -3,58 +3,68 @@ DO
 $$
     DECLARE
         _random_uuid           VARCHAR := gen_random_uuid();
-        _user_name             VARCHAR := 'test_user_' || _random_uuid;
-        _test_folder_a_name    VARCHAR := 'test_folder_' || _random_uuid || '_a';
-        _test_folder_b_name    VARCHAR := 'test_folder_' || _random_uuid || '_b';
+
+        -- users:
         _user_id               INT;
+        _user_name             VARCHAR := 'test_user_' || _random_uuid;
+        _user_email            VARCHAR := _user_name || '@test.com';
+
+        -- resources:
         _resources_folder_a_id INT;
         _resources_folder_b_id INT;
-        _resources_folder_c_id INT;
+
+        -- folders:
         _folder_a_id           INT;
+        _test_folder_a_name    VARCHAR := 'test_folder_' || _random_uuid || '_a';
         _folder_b_id           INT;
+        _test_folder_b_name    VARCHAR := 'test_folder_' || _random_uuid || '_b';
     BEGIN
         -- Arrange
         -- Create a test user
-           INSERT INTO users (username, email, hashed_password)
-           VALUES (_user_name, _user_name || '@email.com', 'dummy_hash')
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES (_user_name, _user_email, _random_uuid)
         RETURNING id INTO _user_id;
 
 
         -- Create a top-level folder
-           INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
+           INSERT
+             INTO resources (type, created_by, updated_by, parent_folder_id)
            VALUES ('folder', _user_id, _user_id, NULL) -- Root folder, parent_folder_id is NULL
         RETURNING id INTO _resources_folder_a_id;
 
-           INSERT INTO folders (resource_id, name)
+           INSERT
+             INTO folders (resource_id, name)
            VALUES (_resources_folder_a_id, _test_folder_a_name)
         RETURNING id INTO _folder_a_id;
 
 
         -- Create a folder inside the folder_a
-           INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-           VALUES ('folder', _user_id, _user_id, _folder_a_id) -- Correct parent_folder_id
+           INSERT
+             INTO resources (type, created_by, updated_by, parent_folder_id)
+           VALUES ('folder', _user_id, _user_id, _resources_folder_a_id) -- Correct parent_folder_id
         RETURNING id INTO _resources_folder_b_id;
 
-           INSERT INTO folders (resource_id, name)
+           INSERT
+             INTO folders (resource_id, name)
            VALUES (_resources_folder_b_id, _test_folder_b_name)
         RETURNING id INTO _folder_b_id;
 
 
         --  Act: insert a folder creating a circular dependency.
         -- Assert: Expect transaction to fail.
-
         BEGIN
-               INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('folder', _user_id, _user_id, _folder_a_id) -- Intentional circular dependency
-            RETURNING id INTO _resources_folder_c_id;
+            UPDATE resources
+               SET parent_folder_id = _resources_folder_b_id
+             WHERE id = _resources_folder_a_id; -- Intentional circular dependency
             RAISE NOTICE 'Test failed "Insert a FOLDER with a circular dependency": Expected exception but transaction succeeded';
         EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test passed "Insert a FOLDER with a circular dependency":  %', sqlerrm;
+            WHEN OTHERS THEN RAISE NOTICE 'Test passed "Insert a folder with a circular dependency": Correctly errored with message - %', sqlerrm;
         END;
 
         -- clean up
 
-        DELETE FROM resources WHERE id = _resources_folder_c_id;
+        --         DELETE FROM resources WHERE id = _resources_folder_c_id;
         DELETE FROM resources WHERE id = _resources_folder_b_id; -- should cascade delete folders 'test_folder_b';
         DELETE FROM resources WHERE id = _resources_folder_a_id; -- should cascade delete folders 'test_folder_a'
         DELETE FROM users WHERE id = _user_id;
