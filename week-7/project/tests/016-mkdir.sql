@@ -21,22 +21,23 @@ $$
         -- resources:
         _resources_folder_a_id      INT;
         _resources_folder_aa_1_id   INT;
-        _resources_folder_aa_2_id   INT;
-        _resources_folder_aaa_1_id  INT;
-        _resources_folder_aaaa_1_id INT;
+        -- _resources_folder_aa_2_id   INT;
+        -- _resources_folder_aaa_1_id  INT;
+        -- _resources_folder_aaaa_1_id INT;
 
 
         -- folders
         _folder_a                   VARCHAR := 'test_folder_' || _random_uuid || '_a';
         _folder_aa_1                VARCHAR := 'test_folder_' || _random_uuid || '_aa_1';
-        _folder_aa_2                VARCHAR := 'test_folder_' || _random_uuid || '_aa_2';
-        _folder_aaa_1               VARCHAR := 'test_folder_' || _random_uuid || '_aaa_1';
-        _folder_aaaa_1              VARCHAR := 'test_folder_' || _random_uuid || '_aaaa_1';
+        -- _folder_aa_2                VARCHAR := 'test_folder_' || _random_uuid || '_aa_2';
+        -- _folder_aaa_1               VARCHAR := 'test_folder_' || _random_uuid || '_aaa_1';
+        -- _folder_aaaa_1              VARCHAR := 'test_folder_' || _random_uuid || '_aaaa_1';
 
 
         -- Additional folders for testing
         _resources_folder_b_id      INT;
         _resources_folder_null_id   INT;
+        _resources_folder_broken_id INT;
         _folder_b                   VARCHAR := 'test_folder_' || _random_uuid || '_b';
         non_existent_user           VARCHAR := 'non_existent_user_' || _random_uuid;
         non_existent_role           VARCHAR := 'non_existent_role';
@@ -198,25 +199,55 @@ $$
             END;
 
 
-            -- Assert:
-            -- Test 5: Check if resource for "_folder_aa_2" was created successfully
-            -- Test 6: Check if folder "_folder_aa_2" was created successfully
+            -- Test 9: Try to create a folder with non-existent parent folder ID
+            BEGIN
+                SELECT INTO _resources_folder_broken_id
+                       mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, -1);
+                RAISE EXCEPTION 'Test 9 failed: "Validation for non-existent parent folder ID did not raise exception"';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm = 'Parent folder with id "-1" does not exist' THEN
+                    RAISE NOTICE 'Test 9 passed: "Validation for non-existent parent folder ID raised correct exception"';
+                ELSE
+                    RAISE NOTICE 'Test 9 failed: "Validation for non-existent parent folder ID raised unexpected exception: %"', sqlerrm;
+                END IF;
+            END;
 
-            -- Act: Create sub-folder "_folder_aaa_1" under folder "_folder_aa_1"
-            -- SELECT INTO _resources_folder_aaa_1_id
-            --        mkdir(_folder_aaa_1, _user_name, parent_folder_id => _resources_folder_aa_1_id);
+            -- Test 10: Try to create a duplicate folder "_folder_a" in the same parent folder
+            BEGIN
+                PERFORM mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
+                RAISE EXCEPTION 'Test 10 failed: "Validation for duplicate folder name did not raise exception"';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm = 'Folder with name "%" already exists in the parent folder' THEN
+                    RAISE NOTICE 'Test 10 passed: "Validation for duplicate folder name raised correct exception"';
+                ELSE
+                    RAISE NOTICE 'Test 10 failed: "Validation for duplicate folder name raised unexpected exception: %"', sqlerrm;
+                END IF;
+            END;
 
-            -- Assert:
-            -- Test 7: Check if resource for "_folder_aaa_1" was created successfully
-            -- Test 8: Check if folder "_folder_aaa_1" was created successfully
+            -- Test 11: Try to create a folder with a non-existent user
+            BEGIN
+                PERFORM mkdir(_folder_a, non_existent_user, 'owner'::ROLE_TYPE, NULL);
+                RAISE EXCEPTION 'Test 11 failed: "Validation for non-existent user did not raise exception"';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm = 'User "%" does not exist' THEN
+                    RAISE NOTICE 'Test 11 passed: "Validation for non-existent user raised correct exception"';
+                ELSE
+                    RAISE NOTICE 'Test 11 failed: "Validation for non-existent user raised unexpected exception: %"', sqlerrm;
+                END IF;
+            END;
 
-            -- Act: Create sub-folder "_folder_aaaa_1" under folder "_folder_aaa_1"
-            -- SELECT INTO _resources_folder_aaaa_1_id
-            --        mkdir(_folder_aaaa_1, _user_name, parent_folder_id => _resources_folder_aaa_1_id);
 
-            -- Assert:
-            -- Test 9: Check if resource for "_folder_aaaa_1" was created successfully
-            -- Test 10: Check if folder "_folder_aaaa_1" was created successfully
+            -- Test 12: Try to create a folder with a non-existent role
+            BEGIN
+                PERFORM mkdir(_folder_a, _user_name, non_existent_role::ROLE_TYPE, NULL);
+                RAISE EXCEPTION 'Test 12 failed: "Validation for non-existent role did not raise exception"';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm = 'Role % not found' THEN
+                    RAISE NOTICE 'Test 12 passed: "Validation for non-existent role raised correct exception"';
+                ELSE
+                    RAISE NOTICE 'Test 12 failed: "Validation for non-existent role raised unexpected exception: %"', sqlerrm;
+                END IF;
+            END;
 
 
         EXCEPTION
@@ -228,16 +259,11 @@ $$
                 -- Cleanup
                 BEGIN
                     -- Example cleanup code:
-                    DELETE
-                      FROM virtual_file_system.public.folders f
-                     WHERE f.resource_id IN (
-                         -- _resources_folder_aaaa_1_id,
-                         -- _resources_folder_aaa_1_id,
-                                             _resources_folder_null_id,
-                                             _resources_folder_b_id,
-                                             _resources_folder_aa_2_id,
-                                             _resources_folder_aa_1_id,
-                                             _resources_folder_a_id);
+                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_broken_id;
+                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_null_id;
+                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_b_id;
+                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_1_id;
+                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
                     DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
                     RAISE NOTICE 'Cleanup completed';
                 END;

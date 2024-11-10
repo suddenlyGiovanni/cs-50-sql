@@ -27,7 +27,7 @@ BEGIN
               FROM resources r --
              WHERE r.id = mkdir.parent_folder_id AND r.type = 'folder'
                      ) THEN
-            RAISE EXCEPTION 'Parent folder with id % does not exist', parent_folder_id;
+            RAISE EXCEPTION 'Parent folder with id "%" does not exist', parent_folder_id;
         END IF;
     END IF;
 
