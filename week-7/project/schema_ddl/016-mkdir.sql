@@ -1,8 +1,7 @@
-DROP FUNCTION IF EXISTS mkdir();
-CREATE OR REPLACE FUNCTION mkdir(
+CREATE OR REPLACE FUNCTION virtual_file_system.public.mkdir(
     folder_name TEXT,
     username TEXT,
-    role_type ROLE_TYPE DEFAULT 'owner',
+    role_type ROLE_TYPE DEFAULT 'owner'::ROLE_TYPE,
     parent_folder_id INTEGER DEFAULT NULL
 ) RETURNS INTEGER AS
 $$
@@ -24,9 +23,9 @@ BEGIN
     -- validate parent_folder_id
     IF mkdir.parent_folder_id IS NOT NULL THEN
         IF NOT exists(
-                     SELECT 1
-                       FROM folders
-                      WHERE folders.id = mkdir.parent_folder_id
+            SELECT 1 --
+              FROM resources r --
+             WHERE r.id = mkdir.parent_folder_id AND r.type = 'folder'
                      ) THEN
             RAISE EXCEPTION 'Parent folder with id % does not exist', parent_folder_id;
         END IF;
@@ -34,35 +33,36 @@ BEGIN
 
     -- validate unique folder name
     IF exists(
-             SELECT 1
-               FROM resources
-                   JOIN folders ON folders.resource_id = resources.id
-              WHERE resources.parent_folder_id = mkdir.parent_folder_id
-                AND name = mkdir.folder_name
+        SELECT 1
+          FROM resources
+              JOIN folders ON folders.resource_id = resources.id
+         WHERE mkdir.parent_folder_id = resources.parent_folder_id
+           AND resources.type = 'folder'
+           AND mkdir.folder_name = folders.name
              ) THEN
         RAISE EXCEPTION 'Folder with name "%" already exists in the parent folder', mkdir.folder_name;
     END IF;
 
     -- Validate and retrieve user_id
     IF NOT exists (
-                  SELECT 1
-                    FROM users
-                   WHERE users.username = mkdir.username
+        SELECT 1
+          FROM users
+         WHERE mkdir.username = users.username
                   ) THEN
         RAISE EXCEPTION 'User "%" does not exist', mkdir.username;
     ELSE
-        SELECT users.id INTO _user_id FROM users WHERE users.username = mkdir.username;
+        SELECT users.id INTO _user_id FROM users WHERE mkdir.username = users.username;
     END IF;
 
     -- Validate and retrieve role_id
     IF NOT exists (
-                  SELECT 1
-                    FROM roles
-                   WHERE roles.name = mkdir.role_type
+        SELECT 1
+          FROM roles
+         WHERE mkdir.role_type = roles.name
                   ) THEN
         RAISE EXCEPTION 'Role % not found', mkdir.role_type;
     ELSE
-        SELECT roles.id INTO _role_id FROM roles WHERE roles.name = mkdir.role_type;
+        SELECT roles.id INTO _role_id FROM roles WHERE mkdir.role_type = roles.name;
     END IF;
 
     /*
@@ -73,32 +73,35 @@ BEGIN
      */
 
     -- Create a new resource
-       INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
+       INSERT
+         INTO resources (type, created_by, updated_by, parent_folder_id)
        VALUES ('folder', _user_id, _user_id, mkdir.parent_folder_id)
     RETURNING resources.id INTO _resource_id;
 
     -- TODO: needs to validate the authorisation of the user to create the folder
 
     -- Create a new `folder` resource
-       INSERT INTO folders (name, resource_id)
-       VALUES (mkdir.folder_name, _resource_id)
+       INSERT
+         INTO folders (resource_id, name) --
+       VALUES (_resource_id, mkdir.folder_name) --
     RETURNING folders.id INTO _folder_id;
 
 
     -- Add corresponding role-based access for the new resource if different from the automatically assigned one 'owner'
---     IF mkdir.role_type != 'owner' THEN
---     END IF;
-    INSERT INTO user_role_resource (resource_id, user_id, role_id)
-    VALUES (_folder_id, _user_id, _role_id)
+    --     IF mkdir.role_type != 'owner' THEN
+    --     END IF;
+    INSERT
+      INTO user_role_resource (resource_id, user_id, role_id)
+    VALUES (_resource_id, _user_id, _role_id)
         ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 
-    RETURN _folder_id;
+    RETURN _resource_id;
 
 END ;
 $$ LANGUAGE plpgsql;
 
 
-COMMENT ON FUNCTION mkdir IS 'Create a new folder for a user with the specified role
+COMMENT ON FUNCTION virtual_file_system.public.mkdir IS 'Create a new folder for a user with the specified role
 
 Parameters:
 - folder_name (TEXT): The name of the new folder to be created
