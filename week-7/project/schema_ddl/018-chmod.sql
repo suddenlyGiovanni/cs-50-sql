@@ -6,9 +6,9 @@ CREATE OR REPLACE FUNCTION chmod(
 $$
 DECLARE
     _role_id SMALLINT := (
-    SELECT roles.id
-      FROM roles
-     WHERE roles.name = chmod.role_type
+                             SELECT roles.id
+                               FROM roles
+                              WHERE roles.name = chmod.role_type
                          );
     _user_id INTEGER;
 
@@ -20,9 +20,9 @@ BEGIN
 
     -- Validate and retrieve user_id
     IF NOT exists (
-                  SELECT 1
-                    FROM users
-                   WHERE users.username = chmod.username
+        SELECT 1
+          FROM users
+         WHERE users.username = chmod.username
                   ) THEN
         RAISE EXCEPTION 'User "%" does not exist', chmod.username;
     ELSE
@@ -30,13 +30,15 @@ BEGIN
     END IF;
 
     -- Validate role_id
-    IF _role_id IS NULL THEN RAISE EXCEPTION 'Role % does not exist', chmod.role_type; END IF;
+    IF _role_id IS NULL THEN
+        RAISE EXCEPTION 'Role % does not exist', chmod.role_type;
+    END IF;
 
     -- Validate resource_id
     IF NOT exists (
-                  SELECT 1
-                    FROM resources
-                   WHERE resources.id = chmod.resource
+        SELECT 1
+          FROM resources
+         WHERE resources.id = chmod.resource
                   ) THEN
         RAISE EXCEPTION 'Resource with id % does not exist', chmod.resource;
     END IF;
@@ -48,7 +50,8 @@ BEGIN
      */
 
     -- Insert or update the user-role-resource relationship
-    INSERT INTO user_role_resource (resource_id, user_id, role_id)
+    INSERT
+      INTO user_role_resource (resource_id, user_id, role_id)
     VALUES (chmod.resource, _user_id, _role_id)
         ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 

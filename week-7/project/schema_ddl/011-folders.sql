@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS folders CASCADE;
 CREATE TABLE IF NOT EXISTS folders (
     id          SERIAL PRIMARY KEY,
     resource_id INTEGER      NOT NULL UNIQUE,
-    name        VARCHAR(255) NOT NULL,
+    name        VARCHAR(255) NOT NULL CHECK ( trim(name) != '' ),
     FOREIGN KEY (resource_id) REFERENCES resources(id)
         ON DELETE CASCADE
 );
