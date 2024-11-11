@@ -4,10 +4,10 @@ DROP TABLE IF EXISTS files CASCADE;
 CREATE TABLE IF NOT EXISTS files (
     id           SERIAL PRIMARY KEY,
     resource_id  INTEGER      NOT NULL UNIQUE,
-    name         VARCHAR(255) NOT NULL,
-    mime_type    VARCHAR(255) NOT NULL,
+    name         VARCHAR(255) NOT NULL CHECK ( trim(name) != '' ),
+    mime_type    VARCHAR(255) NOT NULL CHECK ( trim(mime_type) != '' ),
     size         BIGINT       NOT NULL DEFAULT 0,
-    storage_path TEXT         NOT NULL,
+    storage_path TEXT         NOT NULL CHECK ( trim(storage_path) != '' ),
     FOREIGN KEY (resource_id) REFERENCES resources(id)
         ON DELETE CASCADE
 );
