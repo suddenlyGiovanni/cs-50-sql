@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION virtual_file_system.public.auth_create_trigger() RETURNS TRIGGER AS
 $$
 DECLARE
-    _user_id           INTEGER;
+    _user_id           INTEGER := new.updated_by;
     _current_folder_id INTEGER := new.parent_folder_id;
 BEGIN
     /*
@@ -15,15 +15,13 @@ BEGIN
 	 * 5. if the traversal reaches the top-level folder and the user does not have the required access rights, deny the operation by raising an exception
 	 */
 
-    -- 1. get the user_id from the reference to the resource table
-    SELECT created_by INTO _user_id FROM resources WHERE id = new.resource_id;
 
     -- if parent_folder_id is NULL, indicating it is a top-level folder, skip the authorization check
     IF _current_folder_id IS NULL THEN
         RETURN new;
     END IF;
 
-    -- 2. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
+    -- 1. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
 
     WHILE _current_folder_id IS NOT NULL LOOP
         IF exists(
@@ -36,7 +34,7 @@ BEGIN
             -- if a valid write permission is found, allow the operation
             RETURN new;
         ELSE
-            -- 3. traverse to the parent folder
+            -- 2. traverse to the parent folder
             SELECT r.parent_folder_id
               INTO _current_folder_id
               FROM virtual_file_system.public.resources r
@@ -52,8 +50,8 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION virtual_file_system.public.auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
 
 
-CREATE OR REPLACE TRIGGER auth_folder_create_trigger
-    BEFORE INSERT
-    ON virtual_file_system.public.resources
-    FOR EACH ROW
-EXECUTE FUNCTION virtual_file_system.public.auth_create_trigger();
+-- CREATE OR REPLACE TRIGGER auth_folder_create_trigger
+--     BEFORE INSERT
+--     ON virtual_file_system.public.resources
+--     FOR EACH ROW
+-- EXECUTE FUNCTION virtual_file_system.public.auth_create_trigger();

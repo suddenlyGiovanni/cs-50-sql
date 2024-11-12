@@ -1,4 +1,4 @@
--- Unit test for validate_parent_folder_id function and trigger
+-- Unit test for resources_validate_parent_folder_id_trigger
 DO
 $$
     DECLARE
@@ -25,95 +25,125 @@ $$
         _file_a_id             INT;
     BEGIN
 
-        -- Create a test user
-           INSERT INTO users (username, email, hashed_password)
-           VALUES (_user_name, _user_email, _random_uuid)
-        RETURNING id INTO _user_id;
 
-        -- DESCRIBE: Folder validation:
-
-        -- Test 1: Create a top-level folder
         BEGIN
-               INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('folder', _user_id, _user_id, NULL) -- top-level folder
-            RETURNING id INTO _resources_folder_a_id;
+            -- Outer block to handle exceptions and ensure cleanup
+            -- Create a test user
+               INSERT
+                 INTO users (username, email, hashed_password)
+               VALUES (_user_name, _user_email, _random_uuid)
+            RETURNING id INTO _user_id;
 
-               INSERT INTO folders (resource_id, name)
-               VALUES (_resources_folder_a_id, _folder_a_name)
-            RETURNING id INTO _folder_a_id;
+            -- DESCRIBE: Folder validation:
+            -- Test 1: Should be able to create a top-level folder
+            BEGIN
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('folder', _user_id, _user_id, NULL) -- top-level folder
+                RETURNING id INTO _resources_folder_a_id;
 
-            RAISE NOTICE 'Test 1 passed "Create a top-level folder": File with valid parent folder inserted successfully';
+                   INSERT
+                     INTO folders (resource_id, name)
+                   VALUES (_resources_folder_a_id, _folder_a_name)
+                RETURNING id INTO _folder_a_id;
+
+                RAISE NOTICE 'Test 1 passed: "Should be able to create a top-level folder"';
+            EXCEPTION
+                WHEN OTHERS THEN RAISE NOTICE 'Test 1 failed: "Should be able to create a top-level folder" - Unexpected exception: %', sqlerrm;
+            END;
+
+
+            -- Test 2: Should be able to insert a folder with a valid parent folder
+            BEGIN
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('folder', _user_id, _user_id, _resources_folder_a_id)
+                RETURNING id INTO _resources_folder_b_id;
+
+                   INSERT
+                     INTO folders (resource_id, name)
+                   VALUES (_resources_folder_b_id, _folder_b_name)
+                RETURNING id INTO _folder_b_id;
+
+                RAISE NOTICE 'Test 2 passed: "Should be able to insert a folder with a valid parent folder"';
+            EXCEPTION
+                WHEN OTHERS THEN RAISE NOTICE 'Test 2 failed: "Should be able to insert a folder with a valid parent folder" - Unexpected exception: %', sqlerrm;
+            END;
+
+            -- Test 3: Should fail to Insert a folder with a non-existent parent folder
+            BEGIN
+                INSERT
+                  INTO resources (type, created_by, updated_by, parent_folder_id)
+                VALUES ('folder', _user_id, _user_id, 99999);
+                RAISE EXCEPTION 'Failed to raise exception for parent folder validation';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "99999" does not exist' THEN
+                    RAISE NOTICE 'Test 3 passed: "Should fail to Insert a folder with a non-existent parent folder" - Expected exception:  %', sqlerrm;
+                ELSE
+                    RAISE EXCEPTION 'Test 3 failed: "Should fail to Insert a folder with a non-existent parent folder": Unexpected exception: %', sqlerrm;
+                END IF;
+            END;
+
+
+            -- DESCRIBE: File validation:
+            -- Test 4: Should be able to insert a file with a valid parent folder
+            BEGIN
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('file', _user_id, _user_id, _resources_folder_a_id)
+                RETURNING id INTO _resources_file_a_id;
+
+                   INSERT
+                     INTO files (resource_id, name, mime_type, storage_path)
+                   VALUES (_resources_file_a_id, 'test_file_a', 'text/plain', 'test_file_a.txt')
+                RETURNING id INTO _file_a_id;
+
+                RAISE NOTICE 'Test 4 passed: "Should be able to insert a file with a valid parent folder"';
+            EXCEPTION
+                WHEN OTHERS THEN RAISE NOTICE 'Test 4 failed: "Should be able to insert a file with a valid parent folder" - Unexpected exception: %', sqlerrm;
+            END;
+
+            -- Test 5: Should fail to insert a file with a NULL parent folder
+            BEGIN
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('file', _user_id, _user_id, NULL)
+                RETURNING id
+                    INTO _resources_file_b_id;
+
+                RAISE EXCEPTION 'File with NULL parent folder inserted';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE 'A file resource must have a parent folder' THEN
+                    RAISE NOTICE 'Test 5 passed: "Should fail to insert a file with a NULL parent folder" - Expected exception: %', sqlerrm;
+                ELSE
+                    RAISE NOTICE 'Test 5 failed: "Should fail to insert a file with a NULL parent folder": - Unexpected exception: %', sqlerrm;
+                END IF;
+            END;
+
+
+            -- Test 6: Should fail to insert a file with an existing parent_folder_id but of the wrong type
+            BEGIN
+                INSERT
+                  INTO resources (type, created_by, updated_by, parent_folder_id)
+                VALUES ('file', _user_id, _user_id, _resources_file_a_id);
+                RAISE EXCEPTION 'Failed to raise validation exception';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
+                    RAISE NOTICE 'Test 6 passed: "Should fail to insert a file with an existing parent_folder_id but of the wrong type": Expected exception: %', sqlerrm;
+                ELSE
+                    RAISE NOTICE 'Test 6 failed: "Should fail to insert a file with an existing parent_folder_id but of the wrong type" - Unexpected exception: %', sqlerrm;
+                END IF;
+            END;
+
+
         EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 1 failed "Create a top-level folder": %', sqlerrm;
+            WHEN OTHERS THEN RAISE EXCEPTION 'Unit test failed: %', sqlerrm;
         END;
 
-
-        -- Test 2: Insert a folder with a valid parent folder
-        BEGIN
-               INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('folder', _user_id, _user_id, _resources_folder_a_id)
-            RETURNING id INTO _resources_folder_b_id;
-
-               INSERT INTO folders (resource_id, name)
-               VALUES (_resources_folder_b_id, _folder_b_name)
-            RETURNING id INTO _folder_b_id;
-
-            RAISE NOTICE 'Test 2 passed "Insert a folder with a valid parent folder": Folder with valid parent folder inserted successfully';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 2 failed "Insert a folder with a valid parent folder": %', sqlerrm;
-        END;
-
-        -- Test 3: Insert a folder with a non-existent parent folder (should fail)
-        BEGIN
-            INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-            VALUES ('folder', _user_id, _user_id, 99999);
-            RAISE NOTICE 'Test 3 failed "Insert a folder with a non-existent parent folder (should fail)": Folder with non-existent parent folder inserted';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 3 passed "Insert a folder with a non-existent parent folder (should fail)": Correctly errored with message - %', sqlerrm;
-        END;
-
-
-        -- DESCRIBE: File validation:
-        -- Test 4: Insert a file with a valid parent folder
-        BEGIN
-               INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('file', _user_id, _user_id, _resources_folder_a_id)
-            RETURNING id INTO _resources_file_a_id;
-
-               INSERT INTO files (resource_id, name, mime_type, storage_path)
-               VALUES (_resources_file_a_id, 'test_file_a', 'text/plain', 'test_file_a.txt')
-            RETURNING id INTO _file_a_id;
-
-            RAISE NOTICE 'Test 4 passed "Insert a file with a valid parent folder": File with valid parent folder inserted successfully';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 4 failed "Insert a file with a valid parent folder": %', sqlerrm;
-        END;
-
--- Test 5: Insert a file with a NULL parent folder (should fail)
-        BEGIN
-               INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('file', _user_id, _user_id, NULL)
-            RETURNING id
-                INTO _resources_file_b_id;
-
-            RAISE NOTICE 'Test 5 failed "Insert a file with a NULL parent folder (should fail)": File with NULL parent folder inserted';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 5 passed "Insert a file with a NULL parent folder (should fail)": Correctly errored with message - %', sqlerrm;
-        END;
-
-
-        -- Test 6: insert a file with an existing parent_folder_id but of the wrong type (should fail)
-        BEGIN
-            INSERT INTO resources (type, created_by, updated_by, parent_folder_id)
-            VALUES ('file', _user_id, _user_id, _resources_file_a_id);
-            RAISE NOTICE 'Test 6 failed "Insert a file with a wrong parent folder type (should fail)": expected exception';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Test 6 passed "Insert a file with a wrong parent folder type (should fail)": Correctly errored with message - %', sqlerrm;
-        END;
-
-
--- Clean up
+        -- Tear down: Cleanup test data
         DELETE FROM resources WHERE created_by = _user_id;
         DELETE FROM users WHERE id = _user_id;
-    END
+    END;
+
+
 $$ LANGUAGE plpgsql;
