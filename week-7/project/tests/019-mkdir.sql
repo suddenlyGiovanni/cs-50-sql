@@ -57,7 +57,7 @@ $$
                    mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
 
             -- Assert:
-            -- Test 1: Check if resource for "_folder_a" was created successfully
+            -- Test 1: Should be able to create a top-level folder resource `_folder_a` with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
@@ -68,26 +68,26 @@ $$
                        AND r.type = 'folder'
                        AND r.parent_folder_id IS NULL
                          ) THEN
-                    RAISE NOTICE 'Test 1 passed "Check if resource for `_folder_a` was created successfully"';
+                    RAISE NOTICE 'Test 1 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 1 failed "Check if resource for `_folder_a` was created successfully"';
+                    RAISE EXCEPTION 'Test 1 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function';
                 END IF;
             END;
 
-            -- Test 2: Check if folder "_folder_a" was created successfully
+            -- Test 2: Should be able to create a top-level folder `_folder_a` with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
                       FROM virtual_file_system.public.folders f
                      WHERE f.resource_id = _resources_folder_a_id AND f.name = _folder_a
                          ) THEN
-                    RAISE NOTICE 'Test 2 passed "Check if folder `_folder_a` was created successfully"';
+                    RAISE NOTICE 'Test 2 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 2 failed "Check if folder `_folder_a` was created successfully"';
+                    RAISE EXCEPTION 'Test 2 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 END IF;
             END;
 
-            -- Test 3: Check if the resource "_folder_a" has the correct role associated
+            -- Test 3: Should be able to create the correct resource/role association for the `_folder_a` with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
@@ -100,9 +100,9 @@ $$
                           WHERE roles.name = 'owner'
                                          )
                          ) THEN
-                    RAISE NOTICE 'Test 3 passed "Check if the resource `_folder_a` has the correct role associated"';
+                    RAISE NOTICE 'Test 3 passed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 3 failed "Check if the resource `_folder_a` has the correct role associated"';
+                    RAISE EXCEPTION 'Test 3 failed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
                 END IF;
             END;
 
@@ -112,7 +112,7 @@ $$
                    mkdir(_folder_aa_1, _user_name, 'admin'::ROLE_TYPE, _resources_folder_a_id);
 
             -- Assert:
-            -- Test 4: Check if resource for "_folder_aa_1" was created successfully
+            -- Test 4: Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
@@ -123,13 +123,13 @@ $$
                        AND r.type = 'folder'
                        AND r.parent_folder_id = _resources_folder_a_id
                          ) THEN
-                    RAISE NOTICE 'Test 4 passed "Check if resource for `_folder_aa_1` was created successfully"';
+                    RAISE NOTICE 'Test 4 passed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 4 failed "Check if resource for `_folder_aa_1` was created successfully"';
+                    RAISE EXCEPTION 'Test 4 failed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
                 END IF;
             END;
 
-            -- Test 5: Check if folder "_folder_aa_1" was created successfully
+            -- Test 5: Should be able to create a `_folder_aa_1` folder with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
@@ -137,13 +137,13 @@ $$
                      WHERE f.resource_id = _resources_folder_aa_1_id
                        AND f.name = _folder_aa_1
                          ) THEN
-                    RAISE NOTICE 'Test 5 passed "Check if folder `_folder_aa_1` was created successfully"';
+                    RAISE NOTICE 'Test 5 passed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 5 failed "Check if folder `_folder_aa_1` was created successfully"';
+                    RAISE EXCEPTION 'Test 5 failed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
                 END IF;
             END;
 
-            -- Test 6: Check if the resource "_folder_a" has the correct role associated
+            -- Test 6: Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function
             BEGIN
                 IF exists(
                     SELECT 1
@@ -156,9 +156,9 @@ $$
                           WHERE roles.name = 'admin'
                                          )
                          ) THEN
-                    RAISE NOTICE 'Test 6 passed "Check if the resource `_folder_a` has the correct role associated"';
+                    RAISE NOTICE 'Test 6 passed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 6 failed "Check if the resource `_folder_a` has the correct role associated"';
+                    RAISE EXCEPTION 'Test 6 failed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
                 END IF;
             END;
 
@@ -167,7 +167,8 @@ $$
             SELECT INTO _resources_folder_b_id
                    mkdir(_folder_b, _user_name, 'editor'::ROLE_TYPE, NULL);
 
-            -- Test 7: Check if resource for "_folder_aa_2" was created successfully with the role "editor"
+
+            -- Test 7: Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function
             IF exists(
                 SELECT 1
                   FROM virtual_file_system.public.user_role_resource uur
@@ -179,73 +180,73 @@ $$
                       WHERE roles.name = 'editor'
                                      )
                      ) THEN
-                RAISE NOTICE 'Test 7 passed "Check if resource for `_folder_b` was created successfully with the role editor"';
+                RAISE NOTICE 'Test 7 passed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
             ELSE
-                RAISE EXCEPTION 'Test 7 failed "Check if resource for `_folder_b` was created successfully with the role editor"';
+                RAISE EXCEPTION 'Test 7 failed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
             END IF;
 
 
-            -- Test 8: Try to create a folder with NULL name
+            -- Test 8: Should fail to create a folder with NULL name
             BEGIN
                 SELECT INTO _resources_folder_null_id
                        mkdir(NULL, _user_name, 'owner'::ROLE_TYPE, NULL);
-                RAISE EXCEPTION 'Test 8 failed: "Validation for NULL folder name did not raise exception"';
+                RAISE EXCEPTION 'Validation for NULL folder name  failed to raise an exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Folder name cannot be null or empty string' THEN
-                    RAISE NOTICE 'Test 8 passed: "Validation for NULL folder name raised correct exception"';
+                    RAISE NOTICE 'Test 8 passed: "Should fail to create a folder with NULL name" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 8 failed: "Validation for NULL folder name raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 8 failed: "Should fail to create a folder with NULL name"- Unexpected exception: %"', sqlerrm;
                 END IF;
             END;
 
 
-            -- Test 9: Try to create a folder with non-existent parent folder ID
+            -- Test 9: Should fail to create a folder with non-existent parent folder ID
             BEGIN
                 SELECT INTO _resources_folder_broken_id
                        mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, -1);
-                RAISE EXCEPTION 'Test 9 failed: "Validation for non-existent parent folder ID did not raise exception"';
+                RAISE EXCEPTION 'Validation for non-existent parent folder ID failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Parent folder with id "-1" does not exist' THEN
-                    RAISE NOTICE 'Test 9 passed: "Validation for non-existent parent folder ID raised correct exception"';
+                    RAISE NOTICE 'Test 9 passed: "Should fail to create a folder with non-existent parent folder ID" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 9 failed: "Validation for non-existent parent folder ID raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 9 failed: "Should fail to create a folder with non-existent parent folder ID" - Unexpected exception: %"', sqlerrm;
                 END IF;
             END;
 
-            -- Test 10: Try to create a duplicate folder "_folder_a" in the same parent folder
+            -- Test 10: Should fail to create a duplicate folder `_folder_a` in the same parent folder
             BEGIN
                 PERFORM mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
-                RAISE EXCEPTION 'Test 10 failed: "Validation for duplicate folder name did not raise exception"';
+                RAISE EXCEPTION 'Validation for duplicate folder name failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Folder with name "%" already exists in the parent folder' THEN
-                    RAISE NOTICE 'Test 10 passed: "Validation for duplicate folder name raised correct exception"';
+                    RAISE NOTICE 'Test 10 passed: "Should fail to create a duplicate folder `_folder_a` in the same parent folder" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 10 failed: "Validation for duplicate folder name raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 10 failed: "Should fail to create a duplicate folder `_folder_a` in the same parent folder" - Unexpected exception: %', sqlerrm;
                 END IF;
             END;
 
-            -- Test 11: Try to create a folder with a non-existent user
+            -- Test 11: Should fail to create a folder for a non-existent user
             BEGIN
                 PERFORM mkdir(_folder_a, non_existent_user, 'owner'::ROLE_TYPE, NULL);
-                RAISE EXCEPTION 'Test 11 failed: "Validation for non-existent user did not raise exception"';
+                RAISE EXCEPTION 'Validation for non-existent user failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'User "%" does not exist' THEN
-                    RAISE NOTICE 'Test 11 passed: "Validation for non-existent user raised correct exception"';
+                    RAISE NOTICE 'Test 11 passed: "Should fail to create a folder for a non-existent user" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 11 failed: "Validation for non-existent user raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 11 failed: "Should fail to create a folder for a non-existent user" - Unexpected exception: %', sqlerrm;
                 END IF;
             END;
 
 
-            -- Test 12: Try to create a folder with a non-existent role
+            -- Test 12: Should fail to create a folder for a non-existent role
             BEGIN
                 PERFORM mkdir(_folder_a, _user_name, non_existent_role::ROLE_TYPE, NULL);
-                RAISE EXCEPTION 'Test 12 failed: "Validation for non-existent role did not raise exception"';
+                RAISE EXCEPTION 'Validation for non-existent role failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Role % not found' THEN
-                    RAISE NOTICE 'Test 12 passed: "Validation for non-existent role raised correct exception"';
+                    RAISE NOTICE 'Test 12 passed: "Should fail to create a folder for a non-existent role" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 12 failed: "Validation for non-existent role raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 12 failed: "Should fail to create a folder for a non-existent role" - Unexpected exception: %', sqlerrm;
                 END IF;
             END;
 
