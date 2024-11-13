@@ -24,7 +24,7 @@ $$
         -- files
         _file_a_id             INT;
     BEGIN
-        RAISE NOTICE 'Running resources_validate_parent_folder_id_trigger tests';
+        RAISE NOTICE 'Running `resources_validate_parent_folder_id_trigger` tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- Create a test user
@@ -146,6 +146,6 @@ $$
         -- Tear down: Cleanup test data
         DELETE FROM resources WHERE created_by = _user_id;
         DELETE FROM users WHERE id = _user_id;
-        RAISE NOTICE 'Cleanup resources_validate_parent_folder_id_trigger test data completed';
+        RAISE NOTICE 'Cleanup `resources_validate_parent_folder_id_trigger` test data completed';
     END;
 $$ LANGUAGE plpgsql;

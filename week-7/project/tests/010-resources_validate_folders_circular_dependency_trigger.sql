@@ -21,6 +21,7 @@ $$
 
     BEGIN
         -- Outer block to handle exceptions and ensure cleanup
+        RAISE NOTICE 'Running `resources_validate_folders_circular_dependency_trigger` tests';
         BEGIN
 
             -- Arrange
@@ -36,6 +37,15 @@ $$
                  INTO resources (type, created_by, updated_by, parent_folder_id)
                VALUES ('folder', _user_id, _user_id, NULL) -- Root folder, parent_folder_id is NULL
             RETURNING id INTO _resources_folder_a_id;
+
+
+            INSERT
+              INTO user_role_resource (user_id, role_id, resource_id)
+            VALUES (_user_id, (
+                SELECT roles.id
+                  FROM roles
+                 WHERE roles.name = 'admin'
+                              ), _resources_folder_a_id);
 
                INSERT
                  INTO folders (resource_id, name)
@@ -79,5 +89,6 @@ $$
         DELETE FROM resources WHERE id = _resources_folder_b_id; -- should cascade delete folders 'test_folder_b';
         DELETE FROM resources WHERE id = _resources_folder_a_id; -- should cascade delete folders 'test_folder_a'
         DELETE FROM users WHERE id = _user_id;
+        RAISE NOTICE 'Cleanup `resources_validate_folders_circular_dependency_trigger` test data completed';
     END
 $$ LANGUAGE plpgsql;
