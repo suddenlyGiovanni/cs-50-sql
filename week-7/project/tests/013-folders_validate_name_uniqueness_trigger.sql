@@ -79,7 +79,7 @@ $$
             RETURNING id INTO _folder_aa_id;
 
 
-            -- Test 1: Check if folder "_folder_aa_1" creation was successful
+            -- Test 1: Should be able to create `_folder_aa_1` inside `_folder_a`
             BEGIN
                 IF exists(
                     SELECT 1
@@ -88,13 +88,13 @@ $$
                      WHERE f.name = _folder_aa_1_name
                        AND r.parent_folder_id = _resources_folder_a_id
                          ) THEN
-                    RAISE NOTICE 'Test 1 passed: "Check if `_folder_aa_1` was created successfully in `_folder_a`"';
+                    RAISE NOTICE 'Test 1 passed: "Should be able to create `_folder_aa_1` inside `_folder_a`"';
                 ELSE
-                    RAISE EXCEPTION 'Test 1 failed: "Check if `_folder_aa_1` was created successfully in `_folder_a`"';
+                    RAISE EXCEPTION 'Test 1 failed: "Should be able to create `_folder_aa_1` inside `_folder_a`"';
                 END IF;
             END;
 
-            -- Test 2: Attempt to insert duplicate "_folder_aa_1" inside "_folder_a"
+            -- Test 2: Should fail to insert duplicate folder name `_folder_aa_1` inside `_folder_a`
             BEGIN
                 -- Create another resource
                    INSERT
@@ -107,16 +107,17 @@ $$
                      INTO folders (resource_id, name)
                    VALUES (_resources_folder_aa_dup_id, _folder_aa_name_duplicate)
                 RETURNING id INTO _folder_aa_duplicate_id;
-                RAISE EXCEPTION 'Validation for duplicate folder name did not raise exception';
+                RAISE EXCEPTION 'Validation trigger for duplicate folder name did not catch the duplicate name';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm LIKE '%already exists in the parent folder' THEN
-                    RAISE NOTICE 'Test 2 passed: "Validation for duplicate folder name raised correct exception"- Error message: %',sqlerrm;
+                    RAISE NOTICE 'Test 2 passed: "Should fail to insert duplicate folder name `_folder_aa_1` inside `_folder_a`" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 2 failed: "Validation for duplicate folder name raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 2 failed: "Should fail to insert duplicate folder name `_folder_aa_1` inside `_folder_a`" - Unexpected exception: %', sqlerrm;
                 END IF;
             END;
 
-            -- Test 3: Insert another unique folder "_folder_aa_2" inside "_folder_a"
+
+            -- Test 3: Should be able to insert another unique folder `_folder_aa_2` inside `_folder_a`
             BEGIN
                 -- Create another resource
                    INSERT
@@ -136,14 +137,14 @@ $$
                      WHERE f.name = _folder_aa_2_name
                        AND r.parent_folder_id = _resources_folder_a_id
                          ) THEN
-                    RAISE NOTICE 'Test 3 passed: "Check if `_folder_aa_2` was created successfully in `_folder_a`"';
+                    RAISE NOTICE 'Test 3 passed: "Should be able to insert another unique folder `_folder_aa_2` inside `_folder_a`"';
                 ELSE
-                    RAISE EXCEPTION 'Test 3 failed: "Check if `_folder_aa_2` was created successfully in `_folder_a`"';
+                    RAISE EXCEPTION 'Test 3 failed: "Should be able to insert another unique folder `_folder_aa_2` inside `_folder_a`"';
                 END IF;
             END;
 
 
-            -- Test 4: Attempt to insert duplicate top-level folder "_folder_b"
+            -- Test 4: Should fail to insert a duplicate top-level folder name `_folder_b`
             BEGIN
                 -- Create top-level folder resource
                    INSERT
@@ -156,17 +157,17 @@ $$
                      INTO folders (resource_id, name)
                    VALUES (_resources_folder_bb_dup_id, _folder_a_name_dup)
                 RETURNING id INTO _folder_b_id;
-                RAISE EXCEPTION 'Validation for duplicate top-level folder name did not raise exception';
+                RAISE EXCEPTION 'Validation trigger for duplicate names failed to catch top-level folder name collision';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm LIKE '%already exists as a root resource' THEN
-                    RAISE NOTICE 'Test 4 passed: "Validation for duplicate top-level folder name raised correct exception" - Error Message: %', sqlerrm;
+                    RAISE NOTICE 'Test 4 passed: "Should fail to insert a duplicate top-level folder name `_folder_b`" - Expected exception: %', sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 4 failed: "Validation for duplicate top-level folder name raised unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 4 failed: "Should fail to insert a duplicate top-level folder name `_folder_b`" - Unexpected exception: %"', sqlerrm;
                 END IF;
             END;
 
 
-            -- Test 5: Attempt to insert a folder with an empty name
+            -- Test 5: Should fail to insert a folder with an empty name
             BEGIN
                 -- Create another resource
                    INSERT
@@ -180,8 +181,8 @@ $$
                    VALUES (_resources_folder_aa_3_id, _empty_name)
                 RETURNING id INTO _folder_aa_3_id;
             EXCEPTION
-                WHEN check_violation THEN RAISE NOTICE 'Test 5 passed: "Insertion of folder with empty name was prevented"';
-                WHEN OTHERS THEN RAISE EXCEPTION 'Test 5 failed: "Unexpected error when attempting to insert folder with empty name"';
+                WHEN check_violation THEN RAISE NOTICE 'Test 5 passed: "Should fail to insert a folder with an empty name"- Expected exception: %', sqlerrm;
+                WHEN OTHERS THEN RAISE EXCEPTION 'Test 5 failed: "Should fail to insert a folder with an empty name" - Unexpected exception: %', sqlerrm;
             END;
 
         EXCEPTION
