@@ -35,6 +35,7 @@ $$
 
 
     BEGIN
+        RAISE NOTICE 'Running `resources_validate_authorization_trigger` tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- Arrange: Create test users:
@@ -103,6 +104,7 @@ $$
                 RAISE NOTICE 'Exception: %', sqlerrm;
             -- Ensure that the exception won't prevent execution of the cleanup section
         END;
+
         -- Cleanup
         DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_a_id;
         DELETE
@@ -113,6 +115,6 @@ $$
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_c_id;
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_b_id;
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
-        RAISE NOTICE 'Cleanup completed';
+        RAISE NOTICE 'Cleanup `resources_validate_authorization_trigger` tests data completed';
     END;
 $$;
