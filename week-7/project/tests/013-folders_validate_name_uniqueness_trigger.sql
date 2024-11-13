@@ -46,6 +46,7 @@ $$
 
 
     BEGIN
+        RAISE NOTICE 'Running `folders_validate_name_uniqueness` tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- Arrange: Create a test user
@@ -194,5 +195,6 @@ $$
         DELETE FROM resources WHERE created_by = _user_id;
         DELETE FROM users WHERE id = _user_id;
 
+        RAISE 'Cleanup `folders_validate_name_uniqueness` test data completed';
     END;
 $$;
