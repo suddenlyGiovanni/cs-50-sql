@@ -6,13 +6,12 @@ DECLARE
 BEGIN
     /*
 	 * Algorithm:
-	 * 1. get the user_id from the reference to the resources table
-	 * 2. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
-	 * 3. traverse the parent chain recursively
+	 * 1. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
+	 * 2. traverse the parent chain recursively
 	 *    - for each ancestor folder, check if the user has the required access rights
 	 *    - if the user has the required access rights, allow the operation
-	 * 4. stop the traversal when the parent_folder_id is NULL, indicating the top-level folder
-	 * 5. if the traversal reaches the top-level folder and the user does not have the required access rights, deny the operation by raising an exception
+	 * 3. stop the traversal when the parent_folder_id is NULL, indicating the top-level folder
+	 * 4. if the traversal reaches the top-level folder and the user does not have the required access rights, deny the operation by raising an exception
 	 */
 
 
