@@ -26,7 +26,7 @@ BEGIN
     WHILE _current_folder_id IS NOT NULL LOOP
         IF exists(
             SELECT 1
-              FROM user_role_resource_access_view AS urrav
+              FROM virtual_file_system.public.user_role_resource_access_view AS urrav
              WHERE urrav.resource_id = _current_folder_id
                AND urrav.user_id = _user_id
                AND urrav.write = TRUE
@@ -34,7 +34,7 @@ BEGIN
             -- if a valid write permission is found, allow the operation
             RETURN new;
         ELSE
-            -- 2. traverse to the parent folder
+            -- 2. traverse up to the parent folder
             SELECT r.parent_folder_id
               INTO _current_folder_id
               FROM virtual_file_system.public.resources r
@@ -50,8 +50,8 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION virtual_file_system.public.auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
 
 
--- CREATE OR REPLACE TRIGGER auth_folder_create_trigger
---     BEFORE INSERT
---     ON virtual_file_system.public.resources
---     FOR EACH ROW
--- EXECUTE FUNCTION virtual_file_system.public.auth_create_trigger();
+CREATE OR REPLACE TRIGGER resources_validate_authorization_trigger
+    BEFORE INSERT OR UPDATE
+    ON virtual_file_system.public.resources
+    FOR EACH ROW
+EXECUTE FUNCTION virtual_file_system.public.auth_create_trigger();
