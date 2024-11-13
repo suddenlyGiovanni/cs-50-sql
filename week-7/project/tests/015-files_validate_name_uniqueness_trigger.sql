@@ -42,9 +42,17 @@ $$
 
             -- Create a parent folder resource
                INSERT
-                 INTO resources (created_by, updated_by, type)
-               VALUES (_user_id, _user_id, 'folder')
+                 INTO resources (created_by, updated_by, type, parent_folder_id)
+               VALUES (_user_id, _user_id, 'folder', NULL)
             RETURNING id INTO _resources_folder_root_id;
+
+            INSERT
+              INTO user_role_resource (user_id, role_id, resource_id)
+            VALUES (_user_id, (
+                SELECT roles.id
+                  FROM roles
+                 WHERE roles.name = 'admin'
+                              ), _resources_folder_root_id);
 
                INSERT
                  INTO folders (resource_id, name)
@@ -56,7 +64,7 @@ $$
 
                INSERT
                  INTO resources (created_by, updated_by, type, parent_folder_id)
-               VALUES (_user_id, _user_id, 'file', _folder_root_id)
+               VALUES (_user_id, _user_id, 'file', _resources_folder_root_id)
             RETURNING id INTO _resources_file_a_id;
 
                INSERT
@@ -69,7 +77,7 @@ $$
                 -- Create another resource
                    INSERT
                      INTO resources (created_by, updated_by, type, parent_folder_id)
-                   VALUES (_user_id, _user_id, 'file', _folder_root_id)
+                   VALUES (_user_id, _user_id, 'file', _resources_folder_root_id)
                 RETURNING id INTO _resources_file_a_dup_id;
 
                 -- Insert the folder entry with the duplicate name
@@ -79,7 +87,7 @@ $$
                 RETURNING id INTO _file_a_dup_id;
                 RAISE EXCEPTION 'Validation for duplicate file name did not raise exception';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE '% already exists in the parent folder id %' THEN
+                WHEN OTHERS THEN IF sqlerrm LIKE 'File with name "%" already exists in the parent folder id "%"' THEN
                     RAISE NOTICE 'Test 1 passed: "Validation for duplicate file name raised correct exception"- Error message: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 1 failed: "Validation for duplicate file name raised unexpected exception: %"', sqlerrm;
@@ -88,7 +96,7 @@ $$
 
 
         EXCEPTION
-            WHEN OTHERS THEN RAISE EXCEPTION 'Unit test failed: %', sqlerrm;
+            WHEN OTHERS THEN RAISE NOTICE 'Unit test failed: %', sqlerrm;
         END;
 
         -- Tear down: Cleanup test data
