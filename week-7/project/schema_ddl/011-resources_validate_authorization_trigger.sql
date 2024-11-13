@@ -1,8 +1,8 @@
 CREATE OR REPLACE FUNCTION virtual_file_system.public.auth_create_trigger() RETURNS TRIGGER AS
 $$
 DECLARE
-    _user_id           INTEGER := new.updated_by;
-    _current_folder_id INTEGER := new.parent_folder_id;
+    _user_id        INTEGER := new.updated_by;
+    _has_permission BOOLEAN := FALSE;
 BEGIN
     /*
 	 * Algorithm:
@@ -15,34 +15,38 @@ BEGIN
 	 */
 
 
-    -- if parent_folder_id is NULL, indicating it is a top-level folder, skip the authorization check
-    IF _current_folder_id IS NULL THEN
+    -- If parent_folder_id is NULL, indicating it is a top-level folder, skip the authorization check
+    IF new.parent_folder_id IS NULL THEN
         RETURN new;
     END IF;
 
-    -- 1. check for direct authorization to write permission on the parent_folder_id; if found allow the operation
+      WITH RECURSIVE resource_hierarchy AS (
+          -- Base case: get the parent_folder_id of the current folder
+          SELECT r_base.id
+               , r_base.parent_folder_id
+            FROM virtual_file_system.public.resources r_base
+           WHERE r_base.id = new.parent_folder_id
+           UNION ALL
+-- Recursive case: add parent folders
+          SELECT r.id
+               , r.parent_folder_id
+            FROM virtual_file_system.public.resources r
+                INNER JOIN resource_hierarchy         rh ON r.id = rh.parent_folder_id
+                                           )
+    SELECT exists (
+        SELECT 1
+          FROM resource_hierarchy                                            rh
+              JOIN virtual_file_system.public.user_role_resource_access_view urrav ON urrav.resource_id = rh.id
+         WHERE urrav.user_id = _user_id
+           AND urrav.write = TRUE
+                  )
+      INTO _has_permission;
 
-    WHILE _current_folder_id IS NOT NULL LOOP
-        IF exists(
-            SELECT 1
-              FROM virtual_file_system.public.user_role_resource_access_view AS urrav
-             WHERE urrav.resource_id = _current_folder_id
-               AND urrav.user_id = _user_id
-               AND urrav.write = TRUE
-                 ) THEN
-            -- if a valid write permission is found, allow the operation
-            RETURN new;
-        ELSE
-            -- 2. traverse up to the parent folder
-            SELECT r.parent_folder_id
-              INTO _current_folder_id
-              FROM virtual_file_system.public.resources r
-             WHERE r.id = _current_folder_id;
-        END IF;
-    END LOOP;
-
-    -- 5. if the traversal reaches the top-level folder and the user does not have the required access rights, deny the operation by raising an exception
-    RAISE EXCEPTION 'User "%" does not have write permissions for this folder or any parent folders', _user_id;
+    IF _has_permission THEN
+        RETURN new;
+    ELSE
+        RAISE EXCEPTION 'User % does not have write permissions for this folder or any parent folders', _user_id;
+    END IF;
 
 END;
 $$ LANGUAGE plpgsql;
