@@ -31,6 +31,7 @@ $$
 
 
     BEGIN
+        RAISE NOTICE 'Running `files_validate_name_uniqueness` tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- Arrange: Create a test user
@@ -95,6 +96,6 @@ $$
         DELETE FROM files WHERE id IN (_file_a_id, _file_a_dup_id);
         DELETE FROM resources WHERE created_by = _user_id;
         DELETE FROM users WHERE id = _user_id;
-
+        RAISE NOTICE 'Cleanup `files_validate_name_uniqueness` test data completed';
     END;
 $$;
