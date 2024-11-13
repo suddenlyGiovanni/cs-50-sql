@@ -68,9 +68,9 @@ $$
                        AND r.type = 'folder'
                        AND r.parent_folder_id IS NULL
                          ) THEN
-                    RAISE NOTICE 'Test 1 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
+                    RAISE NOTICE 'Test 01 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 1 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function';
+                    RAISE EXCEPTION 'Test 01 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function';
                 END IF;
             END;
 
@@ -81,9 +81,9 @@ $$
                       FROM virtual_file_system.public.folders f
                      WHERE f.resource_id = _resources_folder_a_id AND f.name = _folder_a
                          ) THEN
-                    RAISE NOTICE 'Test 2 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
+                    RAISE NOTICE 'Test 02 passed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 2 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
+                    RAISE EXCEPTION 'Test 02 failed: "Should be able to create a top-level folder `_folder_a` with mkdir function"';
                 END IF;
             END;
 
@@ -100,9 +100,9 @@ $$
                           WHERE roles.name = 'owner'
                                          )
                          ) THEN
-                    RAISE NOTICE 'Test 3 passed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
+                    RAISE NOTICE 'Test 03 passed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 3 failed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
+                    RAISE EXCEPTION 'Test 03 failed: "Should be able to create the correct resource/role association for the `_folder_a` with mkdir function"';
                 END IF;
             END;
 
@@ -123,9 +123,9 @@ $$
                        AND r.type = 'folder'
                        AND r.parent_folder_id = _resources_folder_a_id
                          ) THEN
-                    RAISE NOTICE 'Test 4 passed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
+                    RAISE NOTICE 'Test 04 passed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 4 failed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
+                    RAISE EXCEPTION 'Test 04 failed: "Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function"';
                 END IF;
             END;
 
@@ -137,9 +137,9 @@ $$
                      WHERE f.resource_id = _resources_folder_aa_1_id
                        AND f.name = _folder_aa_1
                          ) THEN
-                    RAISE NOTICE 'Test 5 passed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
+                    RAISE NOTICE 'Test 05 passed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 5 failed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
+                    RAISE EXCEPTION 'Test 05 failed: "Should be able to create a `_folder_aa_1` folder with mkdir function"';
                 END IF;
             END;
 
@@ -156,9 +156,9 @@ $$
                           WHERE roles.name = 'admin'
                                          )
                          ) THEN
-                    RAISE NOTICE 'Test 6 passed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
+                    RAISE NOTICE 'Test 06 passed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
                 ELSE
-                    RAISE EXCEPTION 'Test 6 failed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
+                    RAISE EXCEPTION 'Test 06 failed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
                 END IF;
             END;
 
@@ -180,9 +180,9 @@ $$
                       WHERE roles.name = 'editor'
                                      )
                      ) THEN
-                RAISE NOTICE 'Test 7 passed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
+                RAISE NOTICE 'Test 07 passed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
             ELSE
-                RAISE EXCEPTION 'Test 7 failed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
+                RAISE EXCEPTION 'Test 07 failed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
             END IF;
 
 
@@ -193,9 +193,9 @@ $$
                 RAISE EXCEPTION 'Validation for NULL folder name  failed to raise an exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Folder name cannot be null or empty string' THEN
-                    RAISE NOTICE 'Test 8 passed: "Should fail to create a folder with NULL name" - Expected exception: %',sqlerrm;
+                    RAISE NOTICE 'Test 08 passed: "Should fail to create a folder with NULL name" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 8 failed: "Should fail to create a folder with NULL name"- Unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 08 failed: "Should fail to create a folder with NULL name"- Unexpected exception: %"', sqlerrm;
                 END IF;
             END;
 
@@ -207,9 +207,9 @@ $$
                 RAISE EXCEPTION 'Validation for non-existent parent folder ID failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Parent folder with id "-1" does not exist' THEN
-                    RAISE NOTICE 'Test 9 passed: "Should fail to create a folder with non-existent parent folder ID" - Expected exception: %',sqlerrm;
+                    RAISE NOTICE 'Test 09 passed: "Should fail to create a folder with non-existent parent folder ID" - Expected exception: %',sqlerrm;
                 ELSE
-                    RAISE NOTICE 'Test 9 failed: "Should fail to create a folder with non-existent parent folder ID" - Unexpected exception: %"', sqlerrm;
+                    RAISE NOTICE 'Test 09 failed: "Should fail to create a folder with non-existent parent folder ID" - Unexpected exception: %"', sqlerrm;
                 END IF;
             END;
 
@@ -218,7 +218,7 @@ $$
                 PERFORM mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
                 RAISE EXCEPTION 'Validation for duplicate folder name failed to raise exception';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm = 'Folder with name "%" already exists in the parent folder' THEN
+                WHEN OTHERS THEN IF sqlerrm LIKE 'Folder with name "%" already exists as a root resource' THEN
                     RAISE NOTICE 'Test 10 passed: "Should fail to create a duplicate folder `_folder_a` in the same parent folder" - Expected exception: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 10 failed: "Should fail to create a duplicate folder `_folder_a` in the same parent folder" - Unexpected exception: %', sqlerrm;
@@ -230,7 +230,7 @@ $$
                 PERFORM mkdir(_folder_a, non_existent_user, 'owner'::ROLE_TYPE, NULL);
                 RAISE EXCEPTION 'Validation for non-existent user failed to raise exception';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm = 'User "%" does not exist' THEN
+                WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not exist' THEN
                     RAISE NOTICE 'Test 11 passed: "Should fail to create a folder for a non-existent user" - Expected exception: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 11 failed: "Should fail to create a folder for a non-existent user" - Unexpected exception: %', sqlerrm;
@@ -243,7 +243,7 @@ $$
                 PERFORM mkdir(_folder_a, _user_name, non_existent_role::ROLE_TYPE, NULL);
                 RAISE EXCEPTION 'Validation for non-existent role failed to raise exception';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm = 'Role % not found' THEN
+                WHEN OTHERS THEN IF sqlerrm LIKE 'invalid input value for enum role_type: "non_existent_role"' THEN
                     RAISE NOTICE 'Test 12 passed: "Should fail to create a folder for a non-existent role" - Expected exception: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 12 failed: "Should fail to create a folder for a non-existent role" - Unexpected exception: %', sqlerrm;
@@ -254,20 +254,20 @@ $$
         EXCEPTION
             WHEN OTHERS THEN --
                 RAISE NOTICE 'Exception: %', sqlerrm;
-                -- Ensure that the exception won't prevent execution of the cleanup section
+            -- Ensure that the exception won't prevent execution of the cleanup section
 
 
-                -- Cleanup
-                BEGIN
-                    -- Example cleanup code:
-                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_broken_id;
-                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_null_id;
-                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_b_id;
-                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_1_id;
-                    DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
-                    DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
-                    RAISE NOTICE 'Cleanup completed';
-                END;
+        END;
+        -- Cleanup
+        BEGIN
+            -- Example cleanup code:
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_broken_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_null_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_b_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_1_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
+            RAISE NOTICE 'Cleanup completed';
         END;
     END;
 $$;
