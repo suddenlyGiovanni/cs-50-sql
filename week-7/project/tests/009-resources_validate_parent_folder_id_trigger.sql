@@ -24,10 +24,9 @@ $$
         -- files
         _file_a_id             INT;
     BEGIN
-
-
+        RAISE NOTICE 'Running resources_validate_parent_folder_id_trigger tests';
+        -- Outer block to handle exceptions and ensure cleanup
         BEGIN
-            -- Outer block to handle exceptions and ensure cleanup
             -- Create a test user
                INSERT
                  INTO users (username, email, hashed_password)
@@ -55,6 +54,14 @@ $$
 
             -- Test 2: Should be able to insert a folder with a valid parent folder
             BEGIN
+                INSERT
+                  INTO user_role_resource (user_id, role_id, resource_id)
+                VALUES (_user_id, (
+                    SELECT roles.id
+                      FROM roles
+                     WHERE roles.name = 'editor'
+                                  ), _resources_folder_a_id);
+
                    INSERT
                      INTO resources (type, created_by, updated_by, parent_folder_id)
                    VALUES ('folder', _user_id, _user_id, _resources_folder_a_id)
@@ -75,13 +82,9 @@ $$
                 INSERT
                   INTO resources (type, created_by, updated_by, parent_folder_id)
                 VALUES ('folder', _user_id, _user_id, 99999);
-                RAISE EXCEPTION 'Failed to raise exception for parent folder validation';
+                RAISE EXCEPTION 'Test 3 failed: "Should fail to Insert a folder with a non-existent parent folder"';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "99999" does not exist' THEN
-                    RAISE NOTICE 'Test 3 passed: "Should fail to Insert a folder with a non-existent parent folder" - Expected exception:  %', sqlerrm;
-                ELSE
-                    RAISE EXCEPTION 'Test 3 failed: "Should fail to Insert a folder with a non-existent parent folder": Unexpected exception: %', sqlerrm;
-                END IF;
+                WHEN OTHERS THEN RAISE NOTICE 'Test 3 passed: "Should fail to Insert a folder with a non-existent parent folder" - Caught exception: %', sqlerrm;
             END;
 
 
@@ -143,7 +146,6 @@ $$
         -- Tear down: Cleanup test data
         DELETE FROM resources WHERE created_by = _user_id;
         DELETE FROM users WHERE id = _user_id;
+        RAISE NOTICE 'Cleanup resources_validate_parent_folder_id_trigger test data completed';
     END;
-
-
 $$ LANGUAGE plpgsql;

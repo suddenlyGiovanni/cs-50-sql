@@ -40,6 +40,7 @@ $$
         wrong_role_type           VARCHAR := 'non_existent_role';
 
     BEGIN
+        RAISE NOTICE 'Running chmod tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- Arrange: Create a test user
@@ -206,6 +207,6 @@ $$
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_c_id;
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_b_id;
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
-        RAISE NOTICE 'Cleanup completed';
+        RAISE NOTICE 'Cleanup chmod tests completed';
     END;
 $$;
