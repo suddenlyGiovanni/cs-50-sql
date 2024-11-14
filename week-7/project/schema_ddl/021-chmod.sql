@@ -1,8 +1,8 @@
-CREATE OR REPLACE FUNCTION chmod(
+CREATE OR REPLACE FUNCTION virtual_file_system.public.chmod(
     _resource_id INTEGER,
     _user_id INTEGER,
     _role_type ROLE_TYPE
-) RETURNS SETOF public.USER_ROLE_RESOURCE AS
+) RETURNS SETOF virtual_file_system.public.USER_ROLE_RESOURCE AS
 $$
 DECLARE
     _role_id SMALLINT := (
@@ -58,7 +58,7 @@ END;
 
 
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION chmod IS 'Change user role attached to a resource.
+COMMENT ON FUNCTION virtual_file_system.public.chmod IS 'Change user role attached to a resource.
 
 Parameters:
 - _resource_id (INTEGER): The ID of the resource (file or folder) to which the role should be assigned.
