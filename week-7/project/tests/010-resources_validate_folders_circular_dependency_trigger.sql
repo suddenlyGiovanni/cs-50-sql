@@ -39,13 +39,18 @@ $$
             RETURNING id INTO _resources_folder_a_id;
 
 
+              WITH admin_role AS (
+                  SELECT roles.id AS role_id
+                    FROM roles
+                   WHERE roles.name = 'admin'
+                                 )
             INSERT
               INTO user_role_resource (user_id, role_id, resource_id)
             VALUES (_user_id, (
-                SELECT roles.id
-                  FROM roles
-                 WHERE roles.name = 'admin'
-                              ), _resources_folder_a_id);
+                SELECT role_id
+                  FROM admin_role
+                              ), _resources_folder_a_id)
+                ON CONFLICT (user_id, resource_id) DO UPDATE SET role_id = excluded.role_id;
 
                INSERT
                  INTO folders (resource_id, name)
