@@ -1,15 +1,15 @@
 SET search_path TO virtual_file_system, public;
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.chmod(
+CREATE OR REPLACE FUNCTION chmod(
     _resource_id INTEGER,
     _user_id INTEGER,
     _role_type ROLE_TYPE
-) RETURNS SETOF virtual_file_system.public.USER_ROLE_RESOURCE AS
+) RETURNS SETOF USER_ROLE_RESOURCE AS
 $$
 DECLARE
     _role_id SMALLINT := (
         SELECT r.id
-          FROM virtual_file_system.public.roles r
+          FROM roles r
          WHERE r.name = chmod._role_type
                          );
 
@@ -21,7 +21,9 @@ BEGIN
 
     -- Validate user_id
     IF NOT exists (
-        SELECT 1 FROM virtual_file_system.public.users u WHERE u.id = chmod._user_id
+        SELECT 1
+          FROM users u
+         WHERE u.id = chmod._user_id
                   ) THEN
         RAISE EXCEPTION 'User "%" does not exist', chmod._user_id;
     END IF;
@@ -33,7 +35,9 @@ BEGIN
 
     -- Validate resource_id
     IF NOT exists (
-        SELECT 1 FROM virtual_file_system.public.resources r WHERE r.id = chmod._resource_id
+        SELECT 1
+          FROM resources r
+         WHERE r.id = chmod._resource_id
                   ) THEN
         RAISE EXCEPTION 'Resource with id % does not exist', chmod._resource_id;
     END IF;
@@ -46,21 +50,20 @@ BEGIN
 
     -- Insert or update the user-role-resource relationship
     INSERT
-      INTO virtual_file_system.public.user_role_resource (resource_id, user_id, role_id)
+      INTO user_role_resource (resource_id, user_id, role_id)
     VALUES (chmod._resource_id, chmod._user_id, _role_id)
         ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 
     RAISE NOTICE 'Role "%" assigned to user "%" for resource id "%"', chmod._role_type, chmod._user_id, chmod._resource_id;
 
     RETURN QUERY SELECT *
-                   FROM virtual_file_system.public.user_role_resource urr
-                  WHERE urr.resource_id = chmod._resource_id
-                    AND urr.user_id = chmod._user_id;
+                   FROM user_role_resource urr
+                  WHERE urr.resource_id = chmod._resource_id AND urr.user_id = chmod._user_id;
 END;
 
 
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION virtual_file_system.public.chmod IS 'Change user role attached to a resource.
+COMMENT ON FUNCTION chmod IS 'Change user role attached to a resource.
 
 Parameters:
 - _resource_id (INTEGER): The ID of the resource (file or folder) to which the role should be assigned.
