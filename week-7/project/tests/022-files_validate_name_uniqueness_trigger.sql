@@ -54,7 +54,8 @@ $$
                 SELECT roles.id
                   FROM roles
                  WHERE roles.name = 'admin'
-                              ), _resources_folder_root_id);
+                              ), _resources_folder_root_id)
+                ON CONFLICT ( user_id, resource_id ) DO UPDATE SET role_id = excluded.role_id;
 
                INSERT
                  INTO folders (resource_id, name)
