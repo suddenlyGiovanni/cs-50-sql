@@ -1,6 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.auth_create_trigger() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION auth_create_trigger() RETURNS TRIGGER AS
 $$
 DECLARE
     _user_id        INTEGER := new.updated_by;
@@ -26,19 +26,19 @@ BEGIN
           -- Base case: get the parent_folder_id of the current folder
           SELECT r_base.id
                , r_base.parent_folder_id
-            FROM virtual_file_system.public.resources r_base
+            FROM resources r_base
            WHERE r_base.id = new.parent_folder_id
            UNION ALL
 -- Recursive case: add parent folders
           SELECT r.id
                , r.parent_folder_id
-            FROM virtual_file_system.public.resources r
-                INNER JOIN resource_hierarchy         rh ON r.id = rh.parent_folder_id
+            FROM resources                    r
+                INNER JOIN resource_hierarchy rh ON r.id = rh.parent_folder_id
                                            )
     SELECT exists (
         SELECT 1
-          FROM resource_hierarchy                                            rh
-              JOIN virtual_file_system.public.user_role_resource_access_view urrav ON urrav.resource_id = rh.id
+          FROM resource_hierarchy                 rh
+              JOIN user_role_resource_access_view urrav ON urrav.resource_id = rh.id
          WHERE urrav.user_id = _user_id
            AND urrav.write = TRUE
                   )
@@ -52,11 +52,11 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION virtual_file_system.public.auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
+COMMENT ON FUNCTION auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
 
 
 CREATE OR REPLACE TRIGGER resources_validate_authorization_trigger
     BEFORE INSERT OR UPDATE
-    ON virtual_file_system.public.resources
+    ON resources
     FOR EACH ROW
-EXECUTE FUNCTION virtual_file_system.public.auth_create_trigger();
+EXECUTE FUNCTION auth_create_trigger();
