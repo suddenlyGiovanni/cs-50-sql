@@ -3,18 +3,7 @@ SET search_path TO virtual_file_system, public;
 BEGIN;
 
 DROP TABLE IF EXISTS permissions CASCADE;
-DO
-$$
-    BEGIN
-        -- idempotently create permission_type enum
-        IF NOT exists (
-            SELECT 1
-              FROM pg_type
-             WHERE typname = 'PERMISSION_TYPE'
-                      ) THEN CREATE TYPE PERMISSION_TYPE AS ENUM ('read', 'write', 'delete', 'manage');
-        END IF;
-    END
-$$;
+
 CREATE TABLE IF NOT EXISTS permissions (
     id          SMALLSERIAL PRIMARY KEY,
     name        public.PERMISSION_TYPE NOT NULL UNIQUE,
