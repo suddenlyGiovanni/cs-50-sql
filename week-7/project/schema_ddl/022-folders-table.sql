@@ -26,4 +26,10 @@ DROP INDEX IF EXISTS folders_parent_folder_name_unique_idx;
 -- COMMENT ON INDEX folders_parent_folder_name_unique_idx IS 'Unique index to enforce the unique folder name within the parent folder; Enables fast lookups for the folder name within the parent folder';
 
 
+CREATE OR REPLACE TRIGGER folders_validate_name_uniqueness_trigger
+    BEFORE INSERT OR UPDATE
+    ON folders
+    FOR EACH ROW
+EXECUTE FUNCTION folders_validate_name_uniqueness();
+
 COMMIT;

@@ -1,5 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;
 DO
 $$
     BEGIN
@@ -18,3 +19,6 @@ COMMENT ON TYPE ROLE IS 'The type of role a user can have in the system.
     Owners can do everything except delete the project,
     Editors can do everything except delete the project and manage users,
     Viewers can only view the project.';
+
+
+COMMIT;

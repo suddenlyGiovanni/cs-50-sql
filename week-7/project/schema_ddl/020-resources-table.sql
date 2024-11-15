@@ -35,4 +35,43 @@ DROP INDEX IF EXISTS resources_type_index;
 -- CREATE INDEX IF NOT EXISTS resources_type_index ON resources(type);
 
 
+DROP TRIGGER IF EXISTS resources_updated_at_trigger ON resources;
+CREATE TRIGGER resources_updated_at_trigger
+    BEFORE INSERT OR UPDATE
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION resource_update_timestamp();
+
+DROP TRIGGER IF EXISTS resources_validate_parent_folder_id_trigger ON resources;
+CREATE OR REPLACE TRIGGER resources_validate_parent_folder_id_trigger
+    BEFORE INSERT OR UPDATE OF parent_folder_id
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION resources_validate_parent_folder_id();
+
+DROP TRIGGER IF EXISTS resources_validate_folders_circular_dependency_trigger ON resources;
+CREATE OR REPLACE TRIGGER resources_validate_folders_circular_dependency_trigger
+    BEFORE INSERT OR UPDATE OF parent_folder_id
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION resources_validate_folders_circular_dependency();
+
+
+DROP TRIGGER IF EXISTS resources_validate_authorization_trigger ON resources;
+CREATE OR REPLACE TRIGGER resources_validate_authorization_trigger
+    BEFORE INSERT OR UPDATE
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION auth_create_trigger();
+
+
+DROP TRIGGER IF EXISTS resources_ownership_assignment_trigger ON resources;
+DROP TRIGGER IF EXISTS resources_ownership_assignment_trigger ON resources;
+CREATE TRIGGER resources_ownership_assignment_trigger
+    AFTER INSERT
+    ON resources
+    FOR EACH ROW
+EXECUTE FUNCTION resources_ownership_assignment_on_insert();
+COMMENT ON TRIGGER resources_ownership_assignment_trigger ON resources IS 'Trigger to automatically assign the "owner" role to the user who creates a resource.';
+
 COMMIT;

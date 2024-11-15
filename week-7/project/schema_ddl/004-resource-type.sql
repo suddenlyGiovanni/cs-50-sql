@@ -1,6 +1,8 @@
 SET search_path TO virtual_file_system, public;
 
 
+BEGIN;
+
 DO
 $$
     BEGIN
@@ -14,3 +16,5 @@ $$
 $$;
 
 COMMENT ON TYPE RESOURCE IS 'The type of the resource; either "folder" or "file"';
+
+COMMIT;

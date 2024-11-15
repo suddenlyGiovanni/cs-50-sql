@@ -1,5 +1,7 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;;
+
 CREATE OR REPLACE FUNCTION resources_ownership_assignment_on_insert() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$
@@ -40,17 +42,9 @@ BEGIN
     RETURN new;
 END;
 $$;
+
 COMMENT ON FUNCTION resources_ownership_assignment_on_insert() IS 'Automatically assigns roles to a user creating a resource.
 	- Assigns the "admin" role to a user creating a root resource
     - and the "owner" role to a user creating a non-root resource.';
 
-
--- resources_ownership_assignment_trigger
-
-DROP TRIGGER IF EXISTS resources_ownership_assignment_trigger ON resources;
-CREATE TRIGGER resources_ownership_assignment_trigger
-    AFTER INSERT
-    ON resources
-    FOR EACH ROW
-EXECUTE FUNCTION resources_ownership_assignment_on_insert();
-COMMENT ON TRIGGER resources_ownership_assignment_trigger ON resources IS 'Trigger to automatically assign the "owner" role to the user who creates a resource.';
+COMMIT;

@@ -1,5 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;
 CREATE OR REPLACE FUNCTION validate_parent_folder_exists(_parent_folder_id INTEGER) RETURNS BOOLEAN AS
 $$
 BEGIN
@@ -32,8 +33,5 @@ END;
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION resources_validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
 
-CREATE OR REPLACE TRIGGER resources_validate_parent_folder_id_trigger
-    BEFORE INSERT OR UPDATE OF parent_folder_id
-    ON resources
-    FOR EACH ROW
-EXECUTE FUNCTION resources_validate_parent_folder_id();
+
+COMMIT;

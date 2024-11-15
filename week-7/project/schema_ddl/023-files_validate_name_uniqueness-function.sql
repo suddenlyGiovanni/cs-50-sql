@@ -29,11 +29,4 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE TRIGGER files_validate_name_uniqueness_trigger
-    BEFORE INSERT OR UPDATE
-    ON files
-    FOR EACH ROW
-EXECUTE FUNCTION files_validate_name_uniqueness();
-
 COMMIT;

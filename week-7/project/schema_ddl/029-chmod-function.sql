@@ -1,5 +1,7 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;
+
 CREATE OR REPLACE FUNCTION chmod(
     _resource_id INTEGER,
     _user_id INTEGER,
@@ -72,3 +74,6 @@ Parameters:
 
 Returns:
 - the modified user_role_resource record';
+
+
+COMMIT;

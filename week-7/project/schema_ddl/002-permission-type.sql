@@ -1,5 +1,7 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;
+
 DO
 $$
     BEGIN
@@ -17,3 +19,5 @@ COMMENT ON TYPE PERMISSION IS 'The type of permission a user can have on a resou
     Write allows the user to update the resource,
     Delete allows the user to delete the resource,
     Manage allows the user to change the access control of the resource.';
+
+COMMIT;

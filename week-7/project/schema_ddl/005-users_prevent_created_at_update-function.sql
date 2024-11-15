@@ -13,11 +13,4 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-DROP TRIGGER IF EXISTS users_prevent_created_at_update_trigger ON users;
-CREATE TRIGGER users_prevent_created_at_update_trigger
-    BEFORE UPDATE
-    ON users
-    FOR EACH ROW
-EXECUTE FUNCTION users_prevent_created_at_update();
-
 COMMIT;

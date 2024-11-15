@@ -22,13 +22,6 @@ VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the abi
      , ('viewer', 'Can only VIEW the resource')
     ON CONFLICT (name) DO NOTHING;
 
-CREATE OR REPLACE FUNCTION roles_seal() RETURNS TRIGGER AS
-$$
-BEGIN
-    RAISE EXCEPTION 'Modifications to the roles table are not allowed.';
-    RETURN NULL;
-END;
-$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS roles_seal_trigger ON roles;
 CREATE TRIGGER roles_seal_trigger

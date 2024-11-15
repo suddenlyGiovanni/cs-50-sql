@@ -40,11 +40,4 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE TRIGGER folders_validate_name_uniqueness_trigger
-    BEFORE INSERT OR UPDATE
-    ON folders
-    FOR EACH ROW
-EXECUTE FUNCTION folders_validate_name_uniqueness();
-
 COMMIT;

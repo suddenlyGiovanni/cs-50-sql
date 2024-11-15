@@ -1,5 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
+BEGIN;
 CREATE OR REPLACE FUNCTION auth_create_trigger() RETURNS TRIGGER AS
 $$
 DECLARE
@@ -52,11 +53,7 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
 COMMENT ON FUNCTION auth_create_trigger IS 'Trigger function to enforce authorization rules on the folders table';
 
-
-CREATE OR REPLACE TRIGGER resources_validate_authorization_trigger
-    BEFORE INSERT OR UPDATE
-    ON resources
-    FOR EACH ROW
-EXECUTE FUNCTION auth_create_trigger();
+COMMIT;

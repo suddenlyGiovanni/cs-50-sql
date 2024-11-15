@@ -31,4 +31,10 @@ DROP INDEX IF EXISTS files_name_unique_within_parent_folder_index;
 -- COMMENT ON INDEX files_name_unique_within_parent_folder_index IS 'Unique index to enforce the unique files name within the parent folder; Enables fast lookups for the files name within the parent folder';
 
 
+CREATE OR REPLACE TRIGGER files_validate_name_uniqueness_trigger
+    BEFORE INSERT OR UPDATE
+    ON files
+    FOR EACH ROW
+EXECUTE FUNCTION files_validate_name_uniqueness();
+
 COMMIT;
