@@ -2,22 +2,6 @@ SET search_path TO virtual_file_system, public;
 
 BEGIN;
 
-DROP TABLE IF EXISTS roles CASCADE;
-
-DROP TYPE IF EXISTS ROLE_TYPE;
-DO
-$$
-    BEGIN
-        IF NOT exists (
-            SELECT 1
-              FROM pg_type
-             WHERE typname = 'ROLE_TYPE'
-                      ) THEN CREATE TYPE ROLE_TYPE AS ENUM ('admin', 'owner', 'editor', 'viewer');
-        END IF;
-    END;
-$$;
-
-
 CREATE TABLE IF NOT EXISTS roles (
     id          SMALLSERIAL PRIMARY KEY,
     name        ROLE_TYPE    NOT NULL UNIQUE,
