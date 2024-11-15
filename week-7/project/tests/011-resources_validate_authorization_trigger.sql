@@ -5,35 +5,30 @@ DO
 $$
     DECLARE
         -- users A:
-        _random_a_uuid            UUID    := gen_random_uuid();
-        _user_a_id                INT;
-        _user_a_name              VARCHAR := 'test_user_a_' || _random_a_uuid;
-        _user_a_email             VARCHAR := _user_a_name || '@test.com';
+        _random_a_uuid         UUID    := gen_random_uuid();
+        _user_a_id             INT;
+        _user_a_name           VARCHAR := 'test_user_a_' || _random_a_uuid;
+        _user_a_email          VARCHAR := _user_a_name || '@test.com';
 
         -- users B:
-        _random_b_uuid            UUID    := gen_random_uuid();
-        _user_b_id                INT;
-        _user_b_name              VARCHAR := 'test_user_b_' || _random_b_uuid;
-        _user_b_email             VARCHAR := _user_b_name || '@test.com';
+        _random_b_uuid         UUID    := gen_random_uuid();
+        _user_b_id             INT;
+        _user_b_name           VARCHAR := 'test_user_b_' || _random_b_uuid;
+        _user_b_email          VARCHAR := _user_b_name || '@test.com';
 
         -- users C:
-        _random_c_uuid            UUID    := gen_random_uuid();
-        _user_c_id                INT;
-        _user_c_name              VARCHAR := 'test_user_c_' || _random_c_uuid;
-        _user_c_email             VARCHAR := _user_c_name || '@test.com';
+        _random_c_uuid         UUID    := gen_random_uuid();
+        _user_c_id             INT;
+        _user_c_name           VARCHAR := 'test_user_c_' || _random_c_uuid;
+        _user_c_email          VARCHAR := _user_c_name || '@test.com';
 
 
         -- Folders
-        _resources_folder_a_id    INT;
-        _folder_a_id              INT;
-        _folder_a_name            VARCHAR := 'test_folder_' || _random_a_uuid || '_a';
+        _resources_folder_a_id INT;
+        _folder_a_id           INT;
+        _folder_a_name         VARCHAR := 'test_folder_' || _random_a_uuid || '_a';
 
-        --
-        _resources_folder_aa_1_id INT;
-        _folder_aa_id             INT;
-        _folder_aa_1_name         VARCHAR := 'test_folder_' || _random_a_uuid || '_aa_1';
-
-
+        
     BEGIN
         RAISE NOTICE 'Running `resources_validate_authorization_trigger` tests';
         -- Outer block to handle exceptions and ensure cleanup
@@ -105,16 +100,20 @@ $$
             -- Ensure that the exception won't prevent execution of the cleanup section
         END;
 
-        -- Cleanup
-        DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_a_id;
-        DELETE
-          FROM virtual_file_system.public.user_role_resource urr
-         WHERE urr.resource_id = _resources_folder_a_id
-           AND urr.user_id = _user_a_id;
-        DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
-        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_c_id;
-        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_b_id;
-        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
-        RAISE NOTICE 'Cleanup `resources_validate_authorization_trigger` tests data completed';
+        -- Tear down: Cleanup test data
+        BEGIN
+            DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_a_id;
+            DELETE
+              FROM virtual_file_system.public.user_role_resource urr
+             WHERE urr.resource_id = _resources_folder_a_id
+               AND urr.user_id = _user_a_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_c_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_b_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
+            RAISE NOTICE 'Cleanup `resources_validate_authorization_trigger` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END;
 $$;

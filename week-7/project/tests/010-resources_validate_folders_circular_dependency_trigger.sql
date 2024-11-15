@@ -90,10 +90,13 @@ $$
         END;
 
         -- Tear down: Cleanup test data
-
-        DELETE FROM resources WHERE id = _resources_folder_b_id; -- should cascade delete folders 'test_folder_b';
-        DELETE FROM resources WHERE id = _resources_folder_a_id; -- should cascade delete folders 'test_folder_a'
-        DELETE FROM users WHERE id = _user_id;
-        RAISE NOTICE 'Cleanup `resources_validate_folders_circular_dependency_trigger` test data completed';
+        BEGIN
+            DELETE FROM resources WHERE id = _resources_folder_b_id; -- should cascade delete folders 'test_folder_b';
+            DELETE FROM resources WHERE id = _resources_folder_a_id; -- should cascade delete folders 'test_folder_a'
+            DELETE FROM users WHERE id = _user_id;
+            RAISE NOTICE 'Cleanup `resources_validate_folders_circular_dependency_trigger` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END
 $$ LANGUAGE plpgsql;

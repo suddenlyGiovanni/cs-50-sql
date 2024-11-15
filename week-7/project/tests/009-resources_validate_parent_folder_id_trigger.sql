@@ -144,8 +144,13 @@ $$
         END;
 
         -- Tear down: Cleanup test data
-        DELETE FROM resources WHERE created_by = _user_id;
-        DELETE FROM users WHERE id = _user_id;
-        RAISE NOTICE 'Cleanup `resources_validate_parent_folder_id_trigger` test data completed';
+        BEGIN
+            DELETE FROM folders WHERE name LIKE 'test_folder_' || _random_uuid || '_%';
+            DELETE FROM resources WHERE created_by = _user_id;
+            DELETE FROM users WHERE id = _user_id;
+            RAISE NOTICE 'Cleanup `resources_validate_parent_folder_id_trigger` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END;
 $$ LANGUAGE plpgsql;

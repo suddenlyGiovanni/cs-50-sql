@@ -21,18 +21,10 @@ $$
         -- resources:
         _resources_folder_a_id      INT;
         _resources_folder_aa_1_id   INT;
-        -- _resources_folder_aa_2_id   INT;
-        -- _resources_folder_aaa_1_id  INT;
-        -- _resources_folder_aaaa_1_id INT;
-
 
         -- folders
         _folder_a                   VARCHAR := 'test_folder_' || _random_uuid || '_a';
         _folder_aa_1                VARCHAR := 'test_folder_' || _random_uuid || '_aa_1';
-        -- _folder_aa_2                VARCHAR := 'test_folder_' || _random_uuid || '_aa_2';
-        -- _folder_aaa_1               VARCHAR := 'test_folder_' || _random_uuid || '_aaa_1';
-        -- _folder_aaaa_1              VARCHAR := 'test_folder_' || _random_uuid || '_aaaa_1';
-
 
         -- Additional folders for testing
         _resources_folder_b_id      INT;
@@ -255,19 +247,19 @@ $$
             WHEN OTHERS THEN --
                 RAISE NOTICE 'Exception: %', sqlerrm;
             -- Ensure that the exception won't prevent execution of the cleanup section
-
-
         END;
-        -- Cleanup
+
+        -- Tear down: Cleanup test data
         BEGIN
-            -- Example cleanup code:
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_broken_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_null_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_b_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_1_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
             DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
-            RAISE NOTICE 'Cleanup completed';
+            RAISE NOTICE 'Cleanup `mkdir` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
         END;
     END;
 $$;

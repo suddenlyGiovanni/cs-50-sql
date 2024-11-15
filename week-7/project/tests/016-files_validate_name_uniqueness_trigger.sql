@@ -100,10 +100,15 @@ $$
         END;
 
         -- Tear down: Cleanup test data
-        DELETE FROM folders WHERE name LIKE _folder_name_like_uuid;
-        DELETE FROM files WHERE id IN (_file_a_id, _file_a_dup_id);
-        DELETE FROM resources WHERE created_by = _user_id;
-        DELETE FROM users WHERE id = _user_id;
-        RAISE NOTICE 'Cleanup `files_validate_name_uniqueness` test data completed';
+        BEGIN
+            DELETE FROM folders WHERE name LIKE _folder_name_like_uuid;
+            DELETE FROM files WHERE id IN (_file_a_id, _file_a_dup_id);
+            DELETE FROM resources WHERE created_by = _user_id;
+            DELETE FROM users WHERE id = _user_id;
+            RAISE NOTICE 'Cleanup `files_validate_name_uniqueness` test data completed';
+
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END;
 $$;

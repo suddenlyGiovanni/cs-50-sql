@@ -110,20 +110,24 @@ $$
             -- Ensure that the exception won't prevent execution of the cleanup section
         END;
 
-        -- Cleanup
-        DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_aa_id;
-        DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_a_id;
-        DELETE
-          FROM virtual_file_system.public.user_role_resource urr
-         WHERE urr.resource_id = _resources_folder_aa_id
-           AND urr.user_id = _user_a_id;
-        DELETE
-          FROM virtual_file_system.public.user_role_resource urr
-         WHERE urr.resource_id = _resources_folder_a_id
-           AND urr.user_id = _user_a_id;
-        DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_id;
-        DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
-        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
-        RAISE NOTICE 'Cleanup `resources_ownership_assignment_trigger` tests data completed';
+        -- Tear down: Cleanup test data
+        BEGIN
+            DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_aa_id;
+            DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_a_id;
+            DELETE
+              FROM virtual_file_system.public.user_role_resource urr
+             WHERE urr.resource_id = _resources_folder_aa_id
+               AND urr.user_id = _user_a_id;
+            DELETE
+              FROM virtual_file_system.public.user_role_resource urr
+             WHERE urr.resource_id = _resources_folder_a_id
+               AND urr.user_id = _user_a_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_aa_id;
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_a_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_a_id;
+            RAISE NOTICE 'Cleanup `resources_ownership_assignment_trigger` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END;
 $$;
