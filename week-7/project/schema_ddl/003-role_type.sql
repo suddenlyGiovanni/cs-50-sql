@@ -1,4 +1,4 @@
-SET search_path TO public, virtual_file_system;
+SET search_path TO virtual_file_system, public;
 
 DO
 $$
