@@ -38,15 +38,34 @@ $$
                VALUES (_user_a_id, _user_a_id, 'folder', NULL)
             RETURNING id INTO _resources_folder_a_id;
 
+
+            IF exists(
+                SELECT 1
+                  FROM virtual_file_system.public.user_role_resource urr
+                 WHERE urr.resource_id = _resources_folder_a_id
+                   AND urr.user_id = _user_a_id
+                   AND urr.role_id = (
+                     SELECT roles.id
+                       FROM roles
+                      WHERE roles.name = 'admin'
+                                     )
+                     ) THEN
+                RAISE NOTICE 'Test 1 pass: "Should automatically assign a `admin` to the user creating a new root resource"';
+            ELSE
+                RAISE NOTICE 'Test 1 failed: "Should automatically assign a `admin` to the user creating a new root resource"';
+            END IF;
+
+
             -- Set `Admin` role for `_resources_folder_a_id` for user `_user_a_id`
-            INSERT
-              INTO virtual_file_system.public.user_role_resource (resource_id, user_id, role_id)
-            VALUES (_resources_folder_a_id, _user_a_id, (
-                SELECT id
-                  FROM roles
-                 WHERE name = 'admin'::ROLE_TYPE
-                                                        ))
-                ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+            -- INSERT
+            --   INTO virtual_file_system.public.user_role_resource (resource_id, user_id, role_id)
+            -- VALUES (_resources_folder_a_id, _user_a_id, (
+            --     SELECT id
+            --       FROM roles
+            --      WHERE name = 'admin'::ROLE_TYPE
+            --                                             ))
+            --     ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
 
             -- Create root folder `_folder_a_name`
                INSERT

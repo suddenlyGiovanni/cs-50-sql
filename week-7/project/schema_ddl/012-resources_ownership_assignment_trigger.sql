@@ -2,27 +2,45 @@ CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_ownership_assign
     LANGUAGE plpgsql AS
 $$
 DECLARE
-    _user_id     INTEGER := new.created_by;
-    _resource_id INTEGER := new.id;
+    _user_id          INTEGER  := new.created_by;
+    _resource_id      INTEGER  := new.id;
+    _owner_role_id    SMALLINT := (
+                                      SELECT r.id AS role_id
+                                        FROM virtual_file_system.public.roles r
+                                       WHERE r.name = 'owner'
+                                  );
+    _admin_role_id    SMALLINT := (
+                                      SELECT r.id AS role_id
+                                        FROM virtual_file_system.public.roles r
+                                       WHERE r.name = 'admin'
+                                  );
+    _parent_folder_id INTEGER  := (
+                                      SELECT re.parent_folder_id
+                                        FROM virtual_file_system.public.resources re
+                                       WHERE re.id = new.id
+                                  );
 BEGIN
     -- Insert the user-role-resource mapping
     -- If it fails, the entire transaction will be rolled back
-      WITH owner_role AS (
-          SELECT roles.id AS role_id
-            FROM roles
-           WHERE roles.name = 'owner'
-                         )
-    INSERT
-      INTO user_role_resource (resource_id, user_id, role_id) --
-    VALUES (_resource_id, _user_id, (
-        SELECT role_id
-          FROM owner_role
-                                    ))
-        ON CONFLICT DO NOTHING;
+
+    IF (_parent_folder_id ISNULL) THEN
+        INSERT
+          INTO user_role_resource (resource_id, user_id, role_id) --
+        VALUES (_resource_id, _user_id, _admin_role_id)
+            ON CONFLICT (resource_id, user_id ) DO NOTHING;
+    ELSE
+        INSERT
+          INTO user_role_resource (resource_id, user_id, role_id) --
+        VALUES (_resource_id, _user_id, _owner_role_id)
+            ON CONFLICT (resource_id, user_id ) DO NOTHING;
+    END IF;
+
     RETURN new;
 END;
 $$;
-COMMENT ON FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert() IS 'Automatically assigns the "owner" role to a resource for the user who created it.';
+COMMENT ON FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert() IS 'Automatically assigns roles to a user creating a resource.
+	- Assigns the "admin" role to a user creating a root resource
+    - and the "owner" role to a user creating a non-root resource.';
 
 
 -- resources_ownership_assignment_trigger
