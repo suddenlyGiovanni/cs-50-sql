@@ -6,13 +6,13 @@ DROP TABLE IF EXISTS resources CASCADE;
 
 -- Initial creation of the resources table without the foreign key constraint
 CREATE TABLE IF NOT EXISTS resources (
-    id               SERIAL        NOT NULL PRIMARY KEY,
-    type             RESOURCE_TYPE NOT NULL,
-    created_at       TIMESTAMP     NOT NULL DEFAULT current_timestamp, -- auto-generated on creation
-    updated_at       TIMESTAMP     NOT NULL DEFAULT current_timestamp, -- auto-updated on every update
-    created_by       INTEGER       NOT NULL,
-    updated_by       INTEGER       NOT NULL,
-    parent_folder_id INTEGER REFERENCES resources(id),                 -- Initially no foreign key constraint
+    id               SERIAL    NOT NULL PRIMARY KEY,
+    type             RESOURCE  NOT NULL,
+    created_at       TIMESTAMP NOT NULL DEFAULT current_timestamp, -- auto-generated on creation
+    updated_at       TIMESTAMP NOT NULL DEFAULT current_timestamp, -- auto-updated on every update
+    created_by       INTEGER   NOT NULL,
+    updated_by       INTEGER   NOT NULL,
+    parent_folder_id INTEGER REFERENCES resources(id),             -- Initially no foreign key constraint
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (updated_by) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT check_parent_folder_id_nullability CHECK ( (type = 'file' AND parent_folder_id IS NOT NULL) OR
