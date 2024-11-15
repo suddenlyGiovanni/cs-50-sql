@@ -1,30 +1,32 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 DROP VIEW IF EXISTS resources_view CASCADE;
 CREATE VIEW resources_view AS
-SELECT user_role_resource_access_view.resource_id
-     , resources.type
-     , coalesce(folders.id, files.id)     AS id
-     , coalesce(folders.name, files.name) AS name
-     , resources.parent_folder_id
-     , files.mime_type
-     , files.size
-     , files.storage_path
-     , resources.created_at
-     , resources.updated_at
-     , resources.created_by
-     , resources.updated_by
-     , user_role_resource_access_view.user_id
-     , user_role_resource_access_view.role_id
-     , user_role_resource_access_view.role
-     , user_role_resource_access_view.manage
-     , user_role_resource_access_view.read
-     , user_role_resource_access_view.write
-     , user_role_resource_access_view.delete
-  FROM user_role_resource_access_view
-      JOIN resources ON user_role_resource_access_view.resource_id = resources.id
-      FULL OUTER JOIN files ON resources.id = files.resource_id
-      FULL OUTER JOIN folders ON resources.id = folders.resource_id;
+    SELECT user_role_resource_access_view.resource_id
+         , resources.type
+         , coalesce(folders.id, files.id)     AS id
+         , coalesce(folders.name, files.name) AS name
+         , resources.parent_folder_id
+         , files.mime_type
+         , files.size
+         , files.storage_path
+         , resources.created_at
+         , resources.updated_at
+         , resources.created_by
+         , resources.updated_by
+         , user_role_resource_access_view.user_id
+         , user_role_resource_access_view.role_id
+         , user_role_resource_access_view.role
+         , user_role_resource_access_view.manage
+         , user_role_resource_access_view.read
+         , user_role_resource_access_view.write
+         , user_role_resource_access_view.delete
+      FROM user_role_resource_access_view
+          JOIN resources ON user_role_resource_access_view.resource_id = resources.id
+          FULL OUTER JOIN files ON resources.id = files.resource_id
+          FULL OUTER JOIN folders ON resources.id = folders.resource_id;
 
 
 COMMENT ON VIEW resources_view IS 'Resources view; a consolidated view of all resources with their respective metadata and access control information';

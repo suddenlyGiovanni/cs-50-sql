@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$

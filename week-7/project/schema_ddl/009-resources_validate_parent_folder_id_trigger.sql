@@ -1,10 +1,10 @@
+SET search_path TO virtual_file_system, public;
+
 CREATE OR REPLACE FUNCTION validate_parent_folder_exists(_parent_folder_id INTEGER) RETURNS BOOLEAN AS
 $$
 BEGIN
     RETURN exists(
-                 SELECT 1
-                   FROM virtual_file_system.public.resources r
-                  WHERE _parent_folder_id = r.id AND r.type = 'folder'
+        SELECT 1 FROM virtual_file_system.public.resources r WHERE _parent_folder_id = r.id AND r.type = 'folder'
                  );
 END;
 $$ LANGUAGE plpgsql;

@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 /*
 *  Unit test for auth validation trigger on resources table
 */
@@ -28,7 +30,7 @@ $$
         _folder_a_id           INT;
         _folder_a_name         VARCHAR := 'test_folder_' || _random_a_uuid || '_a';
 
-        
+
     BEGIN
         RAISE NOTICE 'Running `resources_validate_authorization_trigger` tests';
         -- Outer block to handle exceptions and ensure cleanup

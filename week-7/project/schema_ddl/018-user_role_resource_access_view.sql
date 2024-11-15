@@ -1,18 +1,20 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 DROP VIEW IF EXISTS user_role_resource_access_view CASCADE;
 
 CREATE OR REPLACE VIEW user_role_resource_access_view AS
-SELECT user_role_resource.resource_id
-     , user_role_resource.user_id
-     , user_role_resource.role_id
-     , role_permissions_matrix_view.role
-     , role_permissions_matrix_view.manage
-     , role_permissions_matrix_view.read
-     , role_permissions_matrix_view.write
-     , role_permissions_matrix_view.delete
-  FROM user_role_resource
-      JOIN role_permissions_matrix_view ON user_role_resource.role_id = role_permissions_matrix_view.role_id;
+    SELECT user_role_resource.resource_id
+         , user_role_resource.user_id
+         , user_role_resource.role_id
+         , role_permissions_matrix_view.role
+         , role_permissions_matrix_view.manage
+         , role_permissions_matrix_view.read
+         , role_permissions_matrix_view.write
+         , role_permissions_matrix_view.delete
+      FROM user_role_resource
+          JOIN role_permissions_matrix_view ON user_role_resource.role_id = role_permissions_matrix_view.role_id;
 
 COMMENT ON VIEW user_role_resource_access_view IS 'User-Role-Resource access view';
 COMMENT ON COLUMN user_role_resource_access_view.user_id IS 'User ID';

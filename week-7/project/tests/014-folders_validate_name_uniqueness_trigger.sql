@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 /*
  * Unit test for folders_validate_name_uniqueness trigger:
  * Should validate folder name uniqueness within the same folder level.
@@ -37,7 +39,7 @@ $$
         -- Test names
         _folder_aa_3_id             INT;
         _empty_name                 VARCHAR := '   ';
-        
+
         -- clean up folder name
         _folder_name_like_uuid      VARCHAR := 'test_folder_' || _random_uuid || '_%';
 

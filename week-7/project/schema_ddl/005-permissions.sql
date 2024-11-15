@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 DROP TABLE IF EXISTS permissions CASCADE;
@@ -6,23 +8,24 @@ $$
     BEGIN
         -- idempotently create permission_type enum
         IF NOT exists (
-                      SELECT 1
-                        FROM pg_type
-                       WHERE typname = 'PERMISSION_TYPE'
+            SELECT 1
+              FROM pg_type
+             WHERE typname = 'PERMISSION_TYPE'
                       ) THEN CREATE TYPE PERMISSION_TYPE AS ENUM ('read', 'write', 'delete', 'manage');
         END IF;
     END
 $$;
 CREATE TABLE IF NOT EXISTS permissions (
     id          SMALLSERIAL PRIMARY KEY,
-    name        PERMISSION_TYPE NOT NULL UNIQUE,
-    description VARCHAR(255)    NOT NULL
+    name        public.PERMISSION_TYPE NOT NULL UNIQUE,
+    description VARCHAR(255)           NOT NULL
 );
 
 DROP INDEX IF EXISTS permissions_permission_name_index;
 CREATE INDEX IF NOT EXISTS permissions_permission_name_index ON permissions(id, name);
 
-INSERT INTO permissions (name, description)
+INSERT
+  INTO permissions (name, description)
 VALUES ('read', 'Can READ a resource, Folder or File')
      , ('write', 'Can UPDATE a resource, Folder or File')
      , ('delete', 'Can DELETE a resource, Folder or File')

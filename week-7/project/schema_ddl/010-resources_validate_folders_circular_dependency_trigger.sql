@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_validate_folders_circular_dependency() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$

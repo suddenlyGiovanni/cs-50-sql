@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 -- Creation of the folders table

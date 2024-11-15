@@ -1,3 +1,6 @@
+SET search_path TO virtual_file_system, public;
+BEGIN;
+
 CREATE OR REPLACE FUNCTION virtual_file_system.public.mkdir(
     folder_name TEXT,
     username TEXT,
@@ -111,3 +114,4 @@ Parameters:
 Returns:
 - INTEGER: The ID of the newly created folder
 ';
+END;

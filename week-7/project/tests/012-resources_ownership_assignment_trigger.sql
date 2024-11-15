@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 /*
 *  Unit test for ownership assignment on valid resource creation
 */

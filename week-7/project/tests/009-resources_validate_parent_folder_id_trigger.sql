@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 -- Unit test for resources_validate_parent_folder_id_trigger
 DO
 $$

@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 CREATE OR REPLACE FUNCTION virtual_file_system.public.chmod(
     _resource_id INTEGER,
     _user_id INTEGER,

@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 /*
  * Unit test for files_validate_name_uniqueness trigger:
  * Should validate folder name uniqueness within the same folder level.

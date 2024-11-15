@@ -1,3 +1,6 @@
+SET search_path TO virtual_file_system, public;
+
+
 /*
 *  Unit test for mkdir function:
  * Should be able to create the following folder structure:

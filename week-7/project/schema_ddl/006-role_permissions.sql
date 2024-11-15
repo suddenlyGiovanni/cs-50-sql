@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 DROP TABLE IF EXISTS role_permissions CASCADE;
@@ -21,17 +23,18 @@ DROP TRIGGER IF EXISTS role_permissions_role_id_index ON role_permissions;
 CREATE INDEX IF NOT EXISTS role_permissions_role_id_index ON role_permissions(role_id, permission_id);
 
   WITH role_permissions_mapping AS (
-                                   SELECT r.id AS role_id, p.id AS permission_id
-                                     FROM roles           r
-                                         JOIN permissions p
-                                         ON ((r.name = 'admin' AND p.name IN ('read', 'write', 'delete', 'manage')) OR
-                                             (r.name = 'owner' AND p.name IN ('read', 'write', 'delete')) OR
-                                             (r.name = 'editor' AND p.name IN ('read', 'write')) OR
-                                             (r.name = 'viewer' AND p.name = 'read'))
+      SELECT r.id AS role_id
+           , p.id AS permission_id
+        FROM roles           r
+            JOIN permissions p ON ((r.name = 'admin' AND p.name IN ('read', 'write', 'delete', 'manage')) OR
+                                   (r.name = 'owner' AND p.name IN ('read', 'write', 'delete')) OR
+                                   (r.name = 'editor' AND p.name IN ('read', 'write')) OR
+                                   (r.name = 'viewer' AND p.name = 'read'))
                                    )
 INSERT
   INTO role_permissions (role_id, permission_id)
-SELECT role_id, permission_id
+SELECT role_id
+     , permission_id
   FROM role_permissions_mapping
     ON CONFLICT (role_id, permission_id) DO NOTHING;
 

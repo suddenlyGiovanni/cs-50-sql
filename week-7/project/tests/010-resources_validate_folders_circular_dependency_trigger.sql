@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 -- Unit test for resources_validate_folders_circular_dependency_trigger
 DO
 $$

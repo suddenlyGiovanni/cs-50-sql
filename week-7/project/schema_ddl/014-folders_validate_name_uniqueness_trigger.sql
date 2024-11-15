@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 CREATE OR REPLACE FUNCTION virtual_file_system.public.folders_validate_name_uniqueness() RETURNS TRIGGER

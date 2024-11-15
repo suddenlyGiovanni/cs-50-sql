@@ -1,3 +1,5 @@
+SET search_path TO virtual_file_system, public;
+
 BEGIN;
 
 DROP TABLE IF EXISTS roles CASCADE;
@@ -7,9 +9,9 @@ DO
 $$
     BEGIN
         IF NOT exists (
-                      SELECT 1
-                        FROM pg_type
-                       WHERE typname = 'ROLE_TYPE'
+            SELECT 1
+              FROM pg_type
+             WHERE typname = 'ROLE_TYPE'
                       ) THEN CREATE TYPE ROLE_TYPE AS ENUM ('admin', 'owner', 'editor', 'viewer');
         END IF;
     END;
@@ -28,7 +30,8 @@ COMMENT ON COLUMN roles.description IS 'What the domain behaviour is attached to
 DROP INDEX IF EXISTS roles_role_name_index;
 CREATE INDEX IF NOT EXISTS roles_role_name_index ON roles(id, name);
 
-INSERT INTO roles (name, description)
+INSERT
+  INTO roles (name, description)
 VALUES ('admin', 'Has FULL CONTROL over all files and folders, including the ability to MODIFY PERMISSIONS.')
      , ('owner', 'Can READ, WRITE and DELETE the resource; Automatically assigned to the user creating said resource')
      , ('editor', 'Can READ and WRITE but not delete or manage permissions')
