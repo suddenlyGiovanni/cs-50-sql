@@ -1,6 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION resources_ownership_assignment_on_insert() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -8,17 +8,17 @@ DECLARE
     _resource_id      INTEGER  := new.id;
     _owner_role_id    SMALLINT := (
                                       SELECT r.id AS role_id
-                                        FROM virtual_file_system.public.roles r
+                                        FROM roles r
                                        WHERE r.name = 'owner'
                                   );
     _admin_role_id    SMALLINT := (
                                       SELECT r.id AS role_id
-                                        FROM virtual_file_system.public.roles r
+                                        FROM roles r
                                        WHERE r.name = 'admin'
                                   );
     _parent_folder_id INTEGER  := (
                                       SELECT re.parent_folder_id
-                                        FROM virtual_file_system.public.resources re
+                                        FROM resources re
                                        WHERE re.id = new.id
                                   );
 BEGIN
@@ -40,7 +40,7 @@ BEGIN
     RETURN new;
 END;
 $$;
-COMMENT ON FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert() IS 'Automatically assigns roles to a user creating a resource.
+COMMENT ON FUNCTION resources_ownership_assignment_on_insert() IS 'Automatically assigns roles to a user creating a resource.
 	- Assigns the "admin" role to a user creating a root resource
     - and the "owner" role to a user creating a non-root resource.';
 
@@ -52,5 +52,5 @@ CREATE TRIGGER resources_ownership_assignment_trigger
     AFTER INSERT
     ON resources
     FOR EACH ROW
-EXECUTE FUNCTION virtual_file_system.public.resources_ownership_assignment_on_insert();
+EXECUTE FUNCTION resources_ownership_assignment_on_insert();
 COMMENT ON TRIGGER resources_ownership_assignment_trigger ON resources IS 'Trigger to automatically assign the "owner" role to the user who creates a resource.';
