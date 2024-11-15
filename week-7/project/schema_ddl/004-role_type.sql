@@ -1,7 +1,5 @@
 SET search_path TO public, virtual_file_system;
 
-DROP TYPE IF EXISTS ROLE_TYPE;
-
 DO
 $$
     BEGIN

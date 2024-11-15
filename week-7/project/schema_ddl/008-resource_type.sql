@@ -1,6 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
-DROP TYPE IF EXISTS RESOURCE_TYPE CASCADE;
+
 DO
 $$
     BEGIN
