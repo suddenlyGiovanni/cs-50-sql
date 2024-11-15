@@ -4,13 +4,13 @@ CREATE OR REPLACE FUNCTION validate_parent_folder_exists(_parent_folder_id INTEG
 $$
 BEGIN
     RETURN exists(
-        SELECT 1 FROM virtual_file_system.public.resources r WHERE _parent_folder_id = r.id AND r.type = 'folder'
+        SELECT 1 FROM resources r WHERE _parent_folder_id = r.id AND r.type = 'folder'
                  );
 END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_validate_parent_folder_id() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION resources_validate_parent_folder_id() RETURNS TRIGGER AS
 $$
 BEGIN
     IF new.type = 'file' THEN
@@ -30,10 +30,10 @@ BEGIN
     RETURN new;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION virtual_file_system.public.resources_validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
+COMMENT ON FUNCTION resources_validate_parent_folder_id IS 'Ensure that the parent folder exists for the folder being inserted or updated';
 
 CREATE OR REPLACE TRIGGER resources_validate_parent_folder_id_trigger
     BEFORE INSERT OR UPDATE OF parent_folder_id
-    ON virtual_file_system.public.resources
+    ON resources
     FOR EACH ROW
-EXECUTE FUNCTION virtual_file_system.public.resources_validate_parent_folder_id();
+EXECUTE FUNCTION resources_validate_parent_folder_id();
