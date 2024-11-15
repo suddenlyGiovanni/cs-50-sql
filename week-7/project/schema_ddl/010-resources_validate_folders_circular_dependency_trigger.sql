@@ -1,6 +1,6 @@
 SET search_path TO virtual_file_system, public;
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.resources_validate_folders_circular_dependency() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION resources_validate_folders_circular_dependency() RETURNS TRIGGER
     LANGUAGE plpgsql AS
 $$
 DECLARE
@@ -19,7 +19,7 @@ BEGIN
            UNION
 -- Recursively add parent folder to the folder tree
           SELECT r.parent_folder_id
-            FROM virtual_file_system.public.resources r
+            FROM resources r
                 JOIN folder_tree ON r.id = folder_tree.folder_id
                                     )
 -- Check if the new folder ID appears in the hierarchy, indicating a cycle
@@ -38,11 +38,11 @@ BEGIN
     RETURN new;
 END;
 $$;
-COMMENT ON FUNCTION virtual_file_system.public.resources_validate_folders_circular_dependency IS 'Prevent circular dependency in the folders table';
+COMMENT ON FUNCTION resources_validate_folders_circular_dependency IS 'Prevent circular dependency in the folders table';
 
 
 CREATE OR REPLACE TRIGGER resources_validate_folders_circular_dependency_trigger
     BEFORE INSERT OR UPDATE OF parent_folder_id
     ON resources
     FOR EACH ROW
-EXECUTE FUNCTION virtual_file_system.public.resources_validate_folders_circular_dependency();
+EXECUTE FUNCTION resources_validate_folders_circular_dependency();
