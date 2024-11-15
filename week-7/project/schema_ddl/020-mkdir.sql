@@ -1,7 +1,7 @@
 SET search_path TO virtual_file_system, public;
 BEGIN;
 
-CREATE OR REPLACE FUNCTION virtual_file_system.public.mkdir(
+CREATE OR REPLACE FUNCTION mkdir(
     folder_name TEXT,
     username TEXT,
     role_type ROLE_TYPE DEFAULT 'owner'::ROLE_TYPE,
@@ -104,7 +104,7 @@ END ;
 $$ LANGUAGE plpgsql;
 
 
-COMMENT ON FUNCTION virtual_file_system.public.mkdir IS 'Create a new folder for a user with the specified role
+COMMENT ON FUNCTION mkdir IS 'Create a new folder for a user with the specified role
 
 Parameters:
 - folder_name (TEXT): The name of the new folder to be created
