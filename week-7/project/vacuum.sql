@@ -10,8 +10,8 @@ DROP TABLE virtual_file_system.public.role_permissions CASCADE;
 DROP TABLE virtual_file_system.public.user_role_resource CASCADE;
 
 DROP TYPE virtual_file_system.public.RESOURCE_TYPE CASCADE;
-DROP TYPE virtual_file_system.public.ROLE_TYPE CASCADE;
-DROP TYPE virtual_file_system.public.PERMISSION_TYPE CASCADE;
+DROP TYPE virtual_file_system.public.ROLE CASCADE;
+DROP TYPE virtual_file_system.public.PERMISSION CASCADE;
 
 
 -- Drop dangling functions

@@ -4,7 +4,7 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS roles (
     id          SMALLSERIAL PRIMARY KEY,
-    name        ROLE_TYPE    NOT NULL UNIQUE,
+    name        ROLE         NOT NULL UNIQUE,
     description VARCHAR(255) NOT NULL
 );
 COMMENT ON TABLE roles IS 'Role Base Access Control';

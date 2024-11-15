@@ -3,7 +3,7 @@ SET search_path TO virtual_file_system, public;
 CREATE OR REPLACE FUNCTION chmod(
     _resource_id INTEGER,
     _user_id INTEGER,
-    _role_type ROLE_TYPE
+    _role_type ROLE
 ) RETURNS SETOF USER_ROLE_RESOURCE AS
 $$
 DECLARE
@@ -68,7 +68,7 @@ COMMENT ON FUNCTION chmod IS 'Change user role attached to a resource.
 Parameters:
 - _resource_id (INTEGER): The ID of the resource (file or folder) to which the role should be assigned.
 - _user_id (INTEGER): The ID of the user to which to assign the resource-role.
-- _role_type (ROLE_TYPE): The role type to be assigned to the user.
+- _role_type (ROLE): The role type to be assigned to the user.
 
 Returns:
 - the modified user_role_resource record';

@@ -4,7 +4,7 @@ BEGIN;
 CREATE OR REPLACE FUNCTION mkdir(
     folder_name TEXT,
     username TEXT,
-    role_type ROLE_TYPE DEFAULT 'owner'::ROLE_TYPE,
+    role_type ROLE DEFAULT 'owner'::ROLE,
     parent_folder_id INTEGER DEFAULT NULL
 ) RETURNS INTEGER AS
 $$
@@ -109,7 +109,7 @@ COMMENT ON FUNCTION mkdir IS 'Create a new folder for a user with the specified 
 Parameters:
 - folder_name (TEXT): The name of the new folder to be created
 - username (TEXT): The unique username of the user who will own the folder
-- role_type (ROLE_TYPE, DEFAULT "owner"): The role type to be assigned to the folder
+- role_type (ROLE, DEFAULT "owner"): The role type to be assigned to the folder
 - parent_folder_id (INTEGER, DEFAULT NULL): The ID of the parent folder, if any
 Returns:
 - INTEGER: The ID of the newly created folder
