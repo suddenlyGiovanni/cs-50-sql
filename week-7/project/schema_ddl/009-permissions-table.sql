@@ -6,8 +6,8 @@ DROP TABLE IF EXISTS permissions CASCADE;
 
 CREATE TABLE IF NOT EXISTS permissions (
     id          SMALLSERIAL PRIMARY KEY,
-    name        PERMISSION_TYPE NOT NULL UNIQUE,
-    description VARCHAR(255)    NOT NULL
+    name        PERMISSION   NOT NULL UNIQUE,
+    description VARCHAR(255) NOT NULL
 );
 
 DROP INDEX IF EXISTS permissions_permission_name_index;
