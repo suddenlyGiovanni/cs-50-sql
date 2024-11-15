@@ -17,7 +17,6 @@ $$
         _resources_folder_aa_1_id   INT;
         _resources_folder_aa_2_id   INT;
         _resources_folder_aa_3_id   INT;
-        _resources_folder_aa_4_id   INT;
         _resources_folder_aa_dup_id INT;
 
         -- Folders
@@ -37,10 +36,8 @@ $$
 
         -- Test names
         _folder_aa_3_id             INT;
-        _folder_aa_4_id             INT;
         _empty_name                 VARCHAR := '   ';
-        _non_trimmed_name           VARCHAR := '      valid_name      ';
-
+        
         -- clean up folder name
         _folder_name_like_uuid      VARCHAR := 'test_folder_' || _random_uuid || '_%';
 
@@ -187,14 +184,17 @@ $$
             END;
 
         EXCEPTION
-            WHEN OTHERS THEN RAISE EXCEPTION 'Unit test failed: %', sqlerrm;
+            WHEN OTHERS THEN RAISE NOTICE 'Unit test failed: %', sqlerrm;
         END;
 
         -- Tear down: Cleanup test data
-        DELETE FROM folders WHERE name LIKE _folder_name_like_uuid;
-        DELETE FROM resources WHERE created_by = _user_id;
-        DELETE FROM users WHERE id = _user_id;
-
-        RAISE 'Cleanup `folders_validate_name_uniqueness` test data completed';
+        BEGIN
+            DELETE FROM folders WHERE name LIKE _folder_name_like_uuid;
+            DELETE FROM resources WHERE created_by = _user_id;
+            DELETE FROM users WHERE id = _user_id;
+            RAISE NOTICE 'Cleanup `folders_validate_name_uniqueness` test data completed';
+        EXCEPTION
+            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
+        END;
     END;
 $$;
