@@ -18,6 +18,15 @@ BEGIN
 	 * argument validation:
 	 */
 
+    -- Validate user_id
+    IF NOT exists (
+        SELECT 1
+          FROM users
+         WHERE touch._user_id = users.id
+                  ) THEN
+        RAISE EXCEPTION 'User "%" does not exist', touch._user_id;
+    END IF;
+
     -- validate parent_folder_id
     IF NOT exists(
         SELECT 1 --
@@ -40,15 +49,6 @@ BEGIN
         RAISE EXCEPTION 'File with name "%" already exists in the parent folder', touch._name;
     END IF;
 
-    -- Validate user_id
-    IF NOT exists (
-        SELECT 1
-          FROM users
-         WHERE touch._user_id = users.id
-                  ) THEN
-        RAISE EXCEPTION 'User "%" does not exist', touch._user_id;
-    END IF;
-
 
     /*
      * Core logic:
@@ -59,8 +59,8 @@ BEGIN
 
     -- Create a new resource
        INSERT
-         INTO resources (created_by, updated_by, type, parent_folder_id)
-       VALUES (_user_id, _user_id, 'file', _parent_folder_id)
+         INTO resources (type, created_by, updated_by, parent_folder_id)
+       VALUES ('file'::RESOURCE, _user_id, _user_id, _parent_folder_id)
     RETURNING resources.id INTO _resource_id;
 
     -- Create a new file
