@@ -23,6 +23,7 @@ $$
                                                      SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
                                                  );
         _invalid_resources_file_id   INT;
+        _same_name_resources_file_id INT;
 
         -- folders
         _folder_name                 VARCHAR  := 'test_folder_' || _random_uuid;
@@ -130,6 +131,37 @@ $$
                 END IF;
             END;
 
+            -- Test 04: Should fail to crate a file when a file with the same name already exists in the parent folder
+            BEGIN
+                -- create a file resource
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('file', _user_id, _user_id, _resources_folder_id)
+                RETURNING resources.id INTO _same_name_resources_file_id;
+
+                -- crate a file with an arbitrary name
+                INSERT
+                  INTO files (resource_id, name, mime_type, storage_path)
+                VALUES (_same_name_resources_file_id, 'same_name_file.txt', 'text/plain', '/path/to/file');
+
+
+                PERFORM touch( --
+                        _user_id, --
+                        'same_name_file.txt', --
+                        'text/plain', --
+                        _resources_folder_id, --
+                        '/path/to/file', --
+                        1024 --
+                        );
+                RAISE EXCEPTION 'Validation for unique file name failed to raise exception';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE 'File with name "%" already exists in the parent folder' THEN
+                    RAISE NOTICE 'Test 04 passed: "Should fail to create a File for an already existing file resource with the same name" - Expected exception: %',sqlerrm;
+                ELSE
+                    RAISE NOTICE 'Test 04 failed: "Should fail to create a File for an already existing file resource with the same name" - Unexpected exception: %', sqlerrm;
+                END IF;
+            END;
+
 
         EXCEPTION
             WHEN OTHERS THEN --
@@ -139,6 +171,7 @@ $$
 
         -- Tear down: Cleanup test data
         BEGIN
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _same_name_resources_file_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _invalid_resources_file_id;
             DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_id;
