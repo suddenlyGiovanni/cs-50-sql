@@ -204,6 +204,26 @@ $$
                 INSERT
                   INTO folders (resource_id, name)
                 VALUES (_other_user_resources_folder_id, 'other_owner_' || _other_user_folder_name);
+
+                -- Act
+                PERFORM touch( --
+                        _user_id, --
+                        'should_fail_file_since_user_has_no_write_permission_for_containing_folder.txt', --
+                        'text/plain', --
+                        _other_user_resources_folder_id, --
+                        '/path/to/file', --
+                        1024 --
+                        );
+
+                -- Assert
+                RAISE EXCEPTION 'Validation for write permission failed to raise exception';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not have write permission on the parent folder' THEN
+                    RAISE NOTICE 'Test 05 passed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Expected exception: %',sqlerrm;
+                ELSE
+                    RAISE NOTICE 'Test 05 failed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Unexpected exception: %', sqlerrm;
+                END IF;
+
             END;
 
 

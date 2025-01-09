@@ -46,7 +46,19 @@ BEGIN
            AND resources.type = 'file'
            AND touch._name = files.name
              ) THEN
-        RAISE EXCEPTION 'File with name "%" already exists in the parent folder', touch._name;
+        RAISE EXCEPTION 'File with name "%" already exists in the parent folder "%"', touch._name, touch._parent_folder_id;
+    END IF;
+
+    -- validate permission to create a file in the parent folder
+    -- translate into checking that the _user_id has write permission on the _parent_folder_id
+    IF NOT exists(
+        SELECT 1
+          FROM user_role_resource_access_view urrav
+         WHERE urrav.user_id = _user_id
+           AND urrav.resource_id = _parent_folder_id
+           AND urrav.write IS TRUE
+                 ) THEN
+        RAISE EXCEPTION 'User "%" does not have write permission on the parent folder "%"', touch._user_id , touch._parent_folder_id;
     END IF;
 
 
