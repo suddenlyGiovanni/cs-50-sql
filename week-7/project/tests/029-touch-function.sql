@@ -9,35 +9,42 @@ DO
 $$
     DECLARE
         -- users:
-        _random_uuid                 UUID     := gen_random_uuid();
-        _user_name                   VARCHAR  := 'test_user_' || _random_uuid;
-        _user_email                  VARCHAR  := _user_name || '@test.com';
-        _user_id                     INT;
-        _invalid_user_id             INT      := (
-                                                     SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
-                                                 );
+        _random_uuid                    UUID     := gen_random_uuid();
+        _user_name                      VARCHAR  := 'test_user_' || _random_uuid;
+        _user_email                     VARCHAR  := _user_name || '@test.com';
+        _user_id                        INT;
+        _invalid_user_id                INT      := (
+                                                        SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
+                                                    );
+        _other_random_uuid              UUID     := gen_random_uuid();
+        _other_user_name                VARCHAR  := 'test_user_' || _other_random_uuid;
+        _other_user_email               VARCHAR  := _other_user_name || '@test.com';
+        _other_user_id                  INT;
 
         -- resources:
-        _resources_folder_id         INT;
-        _invalid_resources_folder_id INT      := (
-                                                     SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
-                                                 );
-        _invalid_resources_file_id   INT;
-        _same_name_resources_file_id INT;
+        _resources_folder_id            INT;
+        _invalid_resources_folder_id    INT      := (
+                                                        SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
+                                                    );
+        _invalid_resources_file_id      INT;
+        _same_name_resources_file_id    INT;
+        _other_user_resources_folder_id INT;
 
         -- folders
-        _folder_name                 VARCHAR  := 'test_folder_' || _random_uuid;
-        _folder_id                   INT;
+        _folder_name                    VARCHAR  := 'test_folder_' || _random_uuid;
+        _folder_id                      INT;
+        _other_user_folder_name         VARCHAR  := 'test_folder_' || _other_random_uuid;
 
 
         -- roles:
-        _owner_role_id               SMALLINT := (
-                                                     SELECT id
-                                                       FROM roles
-                                                      WHERE name = 'owner'::ROLE
-                                                 );
+        _owner_role_id                  SMALLINT := (
+                                                        SELECT id
+                                                          FROM roles
+                                                         WHERE name = 'owner'::ROLE
+                                                    );
 
     BEGIN
+        RAISE NOTICE 'Running `touch` tests';
         -- Outer block to handle exceptions and ensure cleanup
         BEGIN
             -- ARRANGE:
@@ -67,6 +74,11 @@ $$
 
             -- validation test conditions
             -- invalid user_id
+            -- invalid parent_folder_id, e.g non existent folder
+            -- invalid parent_folder_id type
+            -- non unique file name
+            -- invalid permissions
+
 
             -- Test 01: Should fail to create a file for a non-existent user
             BEGIN
@@ -163,6 +175,38 @@ $$
             END;
 
 
+            -- Test 05: Should fail to crate a file when the user has no write permission on the parent_folder_id
+            BEGIN
+                /**
+                  ARRANGE: Create a new folder structure for which the user has no write permission
+                    _resources_folder_id (owned by _user_id - _other_user has editor role)
+                    ├── _other_user_resources_folder_id (owned by _other_user_id)
+                 */
+                   INSERT
+                     INTO users (username, email, hashed_password)
+                   VALUES (_other_user_name, _other_user_email, _other_random_uuid)
+                RETURNING users.id INTO _other_user_id;
+
+                INSERT
+                  INTO user_role_resource (resource_id, user_id, role_id)
+                VALUES (_resources_folder_id, _other_user_id, (
+                    SELECT id
+                      FROM roles
+                     WHERE name = 'editor'::ROLE
+                                                              ))
+                    ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('folder', _other_user_id, _other_user_id, _resources_folder_id)
+                RETURNING resources.id INTO _other_user_resources_folder_id;
+
+                INSERT
+                  INTO folders (resource_id, name)
+                VALUES (_other_user_resources_folder_id, 'other_owner_' || _other_user_folder_name);
+            END;
+
+
         EXCEPTION
             WHEN OTHERS THEN --
                 RAISE NOTICE 'Exception: %', sqlerrm;
@@ -171,6 +215,8 @@ $$
 
         -- Tear down: Cleanup test data
         BEGIN
+            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _other_user_resources_folder_id;
+            DELETE FROM virtual_file_system.public.users u WHERE u.id = _other_user_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _same_name_resources_file_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _invalid_resources_file_id;
             DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_id;
