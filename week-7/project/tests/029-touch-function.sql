@@ -29,11 +29,12 @@ $$
         _invalid_resources_file_id      INT;
         _same_name_resources_file_id    INT;
         _other_user_resources_folder_id INT;
+        _resources_folder_b_id          INT;
 
         -- folders
         _folder_name                    VARCHAR  := 'test_folder_' || _random_uuid;
         _folder_id                      INT;
-        _other_user_folder_name         VARCHAR  := 'test_folder_' || _other_random_uuid;
+        _file_b_id                      INT;
 
 
         -- roles:
@@ -203,7 +204,7 @@ $$
 
                 INSERT
                   INTO folders (resource_id, name)
-                VALUES (_other_user_resources_folder_id, 'other_owner_' || _other_user_folder_name);
+                VALUES (_other_user_resources_folder_id, 'other_owner_' || 'test_folder_' || _other_random_uuid);
 
                 -- Act
                 PERFORM touch( --
@@ -222,6 +223,62 @@ $$
                     RAISE NOTICE 'Test 05 passed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Expected exception: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 05 failed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Unexpected exception: %', sqlerrm;
+                END IF;
+
+            END;
+
+            -- Test 0?: Should assign to the file resource the same access role as its parent folder resource
+            BEGIN
+                --  Arrange
+                --  create a new test folder
+                   INSERT
+                     INTO resources (type, created_by, updated_by, parent_folder_id)
+                   VALUES ('folder', _user_id, _user_id, _resources_folder_id)
+                RETURNING resources.id INTO _resources_folder_b_id;
+
+                INSERT
+                  INTO folders (resource_id, name) VALUES (_resources_folder_b_id, 'test_folder_b_' || _random_uuid);
+
+                -- assign to the parent folder a specific role, different from the default one
+                INSERT
+                  INTO user_role_resource (resource_id, user_id, role_id)
+                VALUES (_resources_folder_b_id, _user_id, (
+                    SELECT id
+                      FROM roles
+                     WHERE name = 'editor'::ROLE
+                                                          ))
+                    ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
+                -- Act
+                SELECT touch( --
+                               _user_id, --
+                               'file_with_same_role_as_parent_folder.txt', --
+                               'text/plain', --
+                               _resources_folder_b_id, --
+                               '/path/to/file', --
+                               1024 --
+                       )
+                  INTO _file_b_id;
+                -- Assert
+                -- check if the file resource has the same role as the parent folder
+
+                IF NOT exists (
+                    SELECT 1
+                      FROM user_role_resource urr
+                     WHERE urr.resource_id = (
+                         SELECT f.resource_id
+                           FROM files f
+                          WHERE id = _file_b_id
+                                             )
+                       AND urr.user_id = _user_id
+                       AND urr.role_id = (
+                         SELECT role_id FROM user_role_resource urr2 WHERE urr2.resource_id = _resources_folder_b_id
+                            AND urr2.user_id = _user_id
+                                         )
+                              ) THEN
+                    RAISE EXCEPTION 'Test 0? failed: "Should assign to the file resource the same access role as its parent folder resource"';
+                ELSE
+                    RAISE NOTICE 'Test 0? passed: "Should assign to the file resource the same access role as its parent folder resource"';
                 END IF;
 
             END;
