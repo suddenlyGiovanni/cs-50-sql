@@ -8,14 +8,14 @@ DO
 $$
     DECLARE
         _random_uuid       UUID    := gen_random_uuid();
-        _user_id_valid     INTEGER;
+        _user_id           INTEGER;
         _user_name_valid   TEXT    := 'test_user_' || _random_uuid;
         _user_email_valid  TEXT    := _user_name_valid || '@test.com';
-        _invalid_user_id   INTEGER;
-        _valid_folder_id   INTEGER;
-        _unique_file_name  TEXT    := 'test_file_' || _random_uuid;
+        _user_id_invalid   INTEGER;
+        _folder_id_valid   INTEGER;
+        _file_name         TEXT    := 'test_file_' || _random_uuid;
         _content_type      TEXT    := 'text/plain';
-        _file_path         TEXT    := '/path/to/' || _unique_file_name;
+        _file_path         TEXT    := '/path/to/' || _file_name;
         _file_size         INTEGER := 1024;
         _exception_message TEXT;
     BEGIN
@@ -24,11 +24,11 @@ $$
            INSERT
              INTO users (username, email, hashed_password)
            VALUES (_user_name_valid, _user_email_valid, _random_uuid)
-        RETURNING id INTO _user_id_valid;
+        RETURNING id INTO _user_id;
 
 
         -- Arrange: Set an invalid user ID (assuming negative IDs are invalid)
-        _invalid_user_id := (
+        _user_id_invalid := (
             SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
                             );
 
@@ -36,28 +36,28 @@ $$
         IF exists (
             SELECT 1
               FROM users
-             WHERE id = _invalid_user_id
+             WHERE id = _user_id_invalid
                   ) THEN
-            RAISE EXCEPTION 'Test 01: Setup error: _invalid_user_id % already exists.', _invalid_user_id;
+            RAISE EXCEPTION 'Test 01: Setup error: _invalid_user_id % already exists.', _user_id_invalid;
         END IF;
 
         SELECT mkdir('test_folder_' || _random_uuid, (
             SELECT u.username
               FROM users u
-             WHERE u.id = _user_id_valid
+             WHERE u.id = _user_id
                                                      ), 'admin', NULL)
-          INTO _valid_folder_id;
+          INTO _folder_id_valid;
 
 
         -- Act and Assert: Attempt to create a file with the invalid user ID
         BEGIN
-            PERFORM touch(_invalid_user_id --
-                , _unique_file_name --
+            PERFORM touch(_user_id_invalid --
+                , _file_name --
                 , _content_type --
                 , (
                               SELECT f.resource_id
                                 FROM folders f
-                               WHERE f.id = _valid_folder_id
+                               WHERE f.id = _folder_id_valid
                   ) --
                 , _file_path --
                 , _file_size --
@@ -82,12 +82,86 @@ $$
          WHERE r.id = (
              SELECT f.resource_id
                FROM folders f
-              WHERE f.id = _valid_folder_id
+              WHERE f.id = _folder_id_valid
                       );
-        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id_valid;
+        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
     END;
 $$ LANGUAGE plpgsql;
 -- Test 01: Roll back the transaction to leave the database unchanged
+ROLLBACK;
+
+
+-- Test 02: Should fail to create a file in a non-existent parent folder
+BEGIN;
+DO
+$$
+    DECLARE
+        _user_id                     INTEGER;
+        _random_uuid                 UUID    := gen_random_uuid();
+        _user_name_valid             TEXT    := 'test_user_' || _random_uuid;
+        _user_email_valid            TEXT    := _user_name_valid || '@test.com';
+        _resources_folder_id_invalid INT     := (
+                                                    SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
+                                                );
+        _file_name                   TEXT    := 'test_file_' || _random_uuid;
+        _content_type                TEXT    := 'text/plain';
+        _file_path                   TEXT    := '/path/to/' || _file_name;
+        _file_size                   INTEGER := 1024;
+        _folder_id_valid             INTEGER;
+
+    BEGIN
+        -- Arrange:
+        -- Confirm that the invalid folder does not exist
+        IF exists (
+            SELECT 1 FROM folders f WHERE f.resource_id = _resources_folder_id_invalid
+                  ) THEN
+            RAISE EXCEPTION 'Test 02: Setup error: _invalid_resources_folder_id % already exists.', _resources_folder_id_invalid;
+        END IF;
+
+        -- Create a root test user
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+        RETURNING id INTO _user_id;
+
+        SELECT mkdir('test_folder_' || _random_uuid, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id
+                                                     ), 'admin', NULL)
+          INTO _folder_id_valid;
+
+
+        -- Act and Assert
+        PERFORM touch( --
+                _user_id --
+            , _file_name --
+            , _content_type --
+            , _resources_folder_id_invalid --
+            , _file_path --
+            , _file_size --
+                );
+        RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
+    EXCEPTION
+        WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
+            RAISE NOTICE 'Test 02 passed: "Should fail to create a File for a non-existent parent folder" - Expected exception: %',sqlerrm;
+        ELSE
+            RAISE NOTICE 'Test 02 failed: "Should fail to create a File for a non-existent parent folder" - Unexpected exception: %', sqlerrm;
+        END IF;
+
+
+        -- Tear down: Cleanup test data
+        DELETE
+          FROM virtual_file_system.public.resources r
+         WHERE r.id = (
+             SELECT f.resource_id
+               FROM folders f
+              WHERE f.id = _folder_id_valid
+                      );
+        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
+    END;
+$$ LANGUAGE plpgsql;
+-- Test 02: Roll back the transaction to leave the database unchanged
 ROLLBACK;
 
 
@@ -172,25 +246,6 @@ $$
             -- invalid permissions
 
 
-            -- Test 02: Should fail to create a file in a non-existent parent folder
-            BEGIN
-                PERFORM touch( --
-                        _user_id, --
-                        'wrong_type_parent_folder_test_file', --
-                        'text/plain', --
-                        _invalid_resources_folder_id, --
-                        '/path/to/file', --
-                        1024 --
-                        );
-                RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
-            EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
-                    RAISE NOTICE 'Test 02 passed: "Should fail to create a File for a non-existent parent folder" - Expected exception: %',sqlerrm;
-                ELSE
-                    RAISE NOTICE 'Test 02 failed: "Should fail to create a File for a non-existent parent folder" - Unexpected exception: %', sqlerrm;
-                END IF;
-            END;
-
             -- Test 03: Should fail to create a file in a parent resource that is not a folder
             BEGIN
                 -- create a file resource
@@ -201,7 +256,7 @@ $$
 
                 PERFORM touch( --
                         _user_id, --
-                        'non_existent_parent_folder_test_file', --
+                        'wrong_type_parent_folder_test_file', --
                         'text/plain', --
                         _invalid_resources_file_id, --
                         '/path/to/file', --
