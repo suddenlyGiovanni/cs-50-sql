@@ -268,12 +268,12 @@ $$
                      WHERE urr.resource_id = (
                          SELECT f.resource_id
                            FROM files f
-                          WHERE id = _file_b_id
+                          WHERE f.id = _file_b_id
                                              )
-                       AND urr.user_id = _user_id
                        AND urr.role_id = (
-                         SELECT role_id FROM user_role_resource urr2 WHERE urr2.resource_id = _resources_folder_b_id
-                            AND urr2.user_id = _user_id
+                         SELECT r2.id
+                           FROM roles r2
+                          WHERE r2.name = 'editor'::ROLE
                                          )
                               ) THEN
                     RAISE EXCEPTION 'Test 0? failed: "Should assign to the file resource the same access role as its parent folder resource"';

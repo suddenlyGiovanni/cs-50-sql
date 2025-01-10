@@ -81,6 +81,16 @@ BEGIN
        VALUES (_resource_id, _name, _mime_type, _size, _storage_path)
     RETURNING files.id INTO _file_id;
 
+    -- Apply to the file resource the same access role as the parent folder
+    INSERT
+      INTO user_role_resource (resource_id, user_id, role_id)
+    VALUES (_resource_id, _user_id, (
+        SELECT urr2.role_id --
+          FROM user_role_resource urr2 --
+         WHERE urr2.resource_id = _parent_folder_id --
+           AND urr2.user_id = _user_id
+                                    ))
+        ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 
     RETURN _file_id;
 
