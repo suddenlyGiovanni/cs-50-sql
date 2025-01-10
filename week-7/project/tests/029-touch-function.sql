@@ -315,6 +315,87 @@ $$ LANGUAGE plpgsql;
 ROLLBACK;
 
 
+-- Test 05: Should fail to crate a file when the user has no write permission on the parent_folder_id
+BEGIN;
+DO
+$$
+    DECLARE
+        _user_id_a                INTEGER;
+        _user_id_b                INTEGER;
+        _random_uuid_a            UUID    := gen_random_uuid();
+        _random_uuid_b            UUID    := gen_random_uuid();
+        _file_name                TEXT    := 'test_file_' || _random_uuid_a;
+        _content_type             TEXT    := 'text/plain';
+        _file_path                TEXT    := '/path/to/' || _file_name;
+        _file_size                INTEGER := 1024;
+        _folder_id                INTEGER;
+        _resources_id_root_folder INTEGER;
+
+    BEGIN
+        -- Arrange:
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES ('test_user_' || _random_uuid_a, 'test_user_' || _random_uuid_a || '@test.com', _random_uuid_a)
+        RETURNING id INTO _user_id_a;
+
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES ('test_user_' || _random_uuid_b, 'test_user_' || _random_uuid_b || '@test.com', _random_uuid_b)
+        RETURNING users.id INTO _user_id_b;
+
+        SELECT mkdir('test_folder_' || _random_uuid_a, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id_a
+                                                       ), 'owner', NULL)
+          INTO _folder_id;
+
+        _resources_id_root_folder := (
+            SELECT f.resource_id
+              FROM folders f
+             WHERE f.id = _folder_id
+                                     );
+
+        INSERT
+          INTO user_role_resource (resource_id, user_id, role_id)
+        VALUES ( _resources_id_root_folder --
+               , _user_id_b --
+               , (
+                     SELECT r.id
+                       FROM roles r
+                      WHERE r.name = 'viewer'::ROLE
+                 ))
+            ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
+
+
+        -- Act and Assert
+        PERFORM touch( --
+                _user_id_b --
+            , _file_name --
+            , _content_type --
+            , _resources_id_root_folder -- for which the user has no write permission
+            , _file_path --
+            , _file_size --
+                );
+
+        -- Assert
+        RAISE EXCEPTION 'Validation for write permission failed to raise exception';
+    EXCEPTION
+        WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not have write permission on the parent folder "%"' THEN
+            RAISE NOTICE 'Test 05 passed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Expected exception: %',sqlerrm;
+        ELSE
+            RAISE NOTICE 'Test 05 failed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Unexpected exception: %', sqlerrm;
+        END IF;
+
+        -- Tear down: Cleanup test data
+        DELETE FROM resources r WHERE r.id = _resources_id_root_folder;
+        DELETE FROM users u WHERE u.id = _user_id_b;
+        DELETE FROM users u WHERE u.id = _user_id_a;
+    END;
+$$ LANGUAGE plpgsql;
+-- Test 05: Roll back the transaction to leave the database unchanged
+ROLLBACK;
+
 /**
  * Unit test for touch function:
  * Should be able to create the following folder structure:
@@ -324,34 +405,28 @@ DO
 $$
     DECLARE
         -- users:
-        _random_uuid                    UUID     := gen_random_uuid();
-        _user_name                      VARCHAR  := 'test_user_' || _random_uuid;
-        _user_email                     VARCHAR  := _user_name || '@test.com';
-        _user_id                        INT;
-        _other_random_uuid              UUID     := gen_random_uuid();
-        _other_user_name                VARCHAR  := 'test_user_' || _other_random_uuid;
-        _other_user_email               VARCHAR  := _other_user_name || '@test.com';
-        _other_user_id                  INT;
+        _random_uuid           UUID     := gen_random_uuid();
+        _user_name             VARCHAR  := 'test_user_' || _random_uuid;
+        _user_email            VARCHAR  := _user_name || '@test.com';
+        _user_id               INT;
+
 
         -- resources:
-        _resources_folder_id            INT;
-        _invalid_resources_file_id      INT;
-        _same_name_resources_file_id    INT;
-        _other_user_resources_folder_id INT;
-        _resources_folder_b_id          INT;
+        _resources_folder_id   INT;
+        _resources_folder_b_id INT;
 
         -- folders
-        _folder_name                    VARCHAR  := 'test_folder_' || _random_uuid;
-        _folder_id                      INT;
-        _file_b_id                      INT;
+        _folder_name           VARCHAR  := 'test_folder_' || _random_uuid;
+        _folder_id             INT;
+        _file_b_id             INT;
 
 
         -- roles:
-        _owner_role_id                  SMALLINT := (
-                                                        SELECT id
-                                                          FROM roles
-                                                         WHERE name = 'owner'::ROLE
-                                                    );
+        _owner_role_id         SMALLINT := (
+                                               SELECT id
+                                                 FROM roles
+                                                WHERE name = 'owner'::ROLE
+                                           );
 
     BEGIN
         RAISE NOTICE 'Running `touch` tests';
@@ -388,58 +463,6 @@ $$
             -- invalid parent_folder_id type
             -- non unique file name
             -- invalid permissions
-
-
-            -- Test 05: Should fail to crate a file when the user has no write permission on the parent_folder_id
-            BEGIN
-                /**
-                  ARRANGE: Create a new folder structure for which the user has no write permission
-                    _resources_folder_id (owned by _user_id - _other_user has editor role)
-                    ├── _other_user_resources_folder_id (owned by _other_user_id)
-                 */
-                   INSERT
-                     INTO users (username, email, hashed_password)
-                   VALUES (_other_user_name, _other_user_email, _other_random_uuid)
-                RETURNING users.id INTO _other_user_id;
-
-                INSERT
-                  INTO user_role_resource (resource_id, user_id, role_id)
-                VALUES (_resources_folder_id, _other_user_id, (
-                    SELECT id
-                      FROM roles
-                     WHERE name = 'editor'::ROLE
-                                                              ))
-                    ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
-
-                   INSERT
-                     INTO resources (type, created_by, updated_by, parent_folder_id)
-                   VALUES ('folder', _other_user_id, _other_user_id, _resources_folder_id)
-                RETURNING resources.id INTO _other_user_resources_folder_id;
-
-                INSERT
-                  INTO folders (resource_id, name)
-                VALUES (_other_user_resources_folder_id, 'other_owner_' || 'test_folder_' || _other_random_uuid);
-
-                -- Act
-                PERFORM touch( --
-                        _user_id, --
-                        'should_fail_file_since_user_has_no_write_permission_for_containing_folder.txt', --
-                        'text/plain', --
-                        _other_user_resources_folder_id, --
-                        '/path/to/file', --
-                        1024 --
-                        );
-
-                -- Assert
-                RAISE EXCEPTION 'Validation for write permission failed to raise exception';
-            EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not have write permission on the parent folder' THEN
-                    RAISE NOTICE 'Test 05 passed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Expected exception: %',sqlerrm;
-                ELSE
-                    RAISE NOTICE 'Test 05 failed: "Should fail to crate a file when the user has no write permission on the parent_folder_id" - Unexpected exception: %', sqlerrm;
-                END IF;
-
-            END;
 
             -- Test 0?: Should assign to the file resource the same access role as its parent folder resource
             BEGIN
@@ -506,10 +529,6 @@ $$
 
         -- Tear down: Cleanup test data
         BEGIN
-            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _other_user_resources_folder_id;
-            DELETE FROM virtual_file_system.public.users u WHERE u.id = _other_user_id;
-            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _same_name_resources_file_id;
-            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _invalid_resources_file_id;
             DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_id;
             DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
