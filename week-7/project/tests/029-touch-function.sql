@@ -360,145 +360,74 @@ $$ LANGUAGE plpgsql;
 -- Test 05: Roll back the transaction to leave the database unchanged
 ROLLBACK;
 
-/**
- * Unit test for touch function:
- * Should be able to create the following folder structure:
- *
- */
+
+-- Test 0?: Should assign to the file resource the same access role as its parent folder resource
+BEGIN;
 DO
 $$
     DECLARE
-        -- users:
-        _random_uuid           UUID     := gen_random_uuid();
-        _user_name             VARCHAR  := 'test_user_' || _random_uuid;
-        _user_email            VARCHAR  := _user_name || '@test.com';
-        _user_id               INT;
-
-
-        -- resources:
-        _resources_folder_id   INT;
-        _resources_folder_b_id INT;
-
-        -- folders
-        _folder_name           VARCHAR  := 'test_folder_' || _random_uuid;
-        _folder_id             INT;
-        _file_b_id             INT;
-
-
-        -- roles:
-        _owner_role_id         SMALLINT := (
-                                               SELECT id
-                                                 FROM roles
-                                                WHERE name = 'owner'::ROLE
-                                           );
+        _user_id                  INTEGER;
+        _random_uuid              UUID := gen_random_uuid();
+        _folder_id                INTEGER;
+        _resources_id_root_folder INTEGER;
+        _resource_id_file         INTEGER;
 
     BEGIN
-        RAISE NOTICE 'Running `touch` tests';
-        -- Outer block to handle exceptions and ensure cleanup
-        BEGIN
-            -- ARRANGE:
-            -- Create a test user
-               INSERT
-                 INTO users (username, email, hashed_password)
-               VALUES (_user_name, _user_email, _random_uuid)
-            RETURNING id INTO _user_id;
+        -- Arrange:
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES ( 'test_user_' || _random_uuid --
+                  , 'test_user_' || _random_uuid || '@test.com' --
+                  , _random_uuid)
+        RETURNING id INTO _user_id;
 
+        SELECT mkdir('test_folder_' || _random_uuid, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id
+                                                     ), 'admin'::ROLE, NULL)
+          INTO _folder_id;
 
-            -- Create a test folder "_folder" with the `owner` role
-               INSERT
-                 INTO resources (type, created_by, updated_by, parent_folder_id)
-               VALUES ('folder', _user_id, _user_id, NULL)
-            RETURNING resources.id INTO _resources_folder_id;
+        _resources_id_root_folder := (
+            SELECT f.resource_id
+              FROM folders f
+             WHERE f.id = _folder_id
+                                     );
 
-               INSERT
-                 INTO folders (resource_id, name)
-               VALUES (_resources_folder_id, _folder_name)
-            RETURNING folders.id INTO _folder_id;
+        -- Act
+        SELECT touch( --
+                       _user_id, --
+                       'test_file_' || _random_uuid, --
+                       'text/plain', --
+                       _resources_id_root_folder, --
+                       '/path/to/' || 'test_file_' || _random_uuid, --
+                       1024 --
+               )
+          INTO _resource_id_file;
 
+        -- Assert
+        -- check if the file resource has the same role as the parent folder
+        IF NOT exists (
+            SELECT 1
+              FROM user_role_resource urr
+             WHERE urr.resource_id = _resource_id_file
+               AND urr.role_id = (
+                 SELECT r.id
+                   FROM roles r
+                  WHERE r.name = 'admin'::ROLE
+                                 )
+                      ) THEN
+            RAISE EXCEPTION 'Test 0? failed: "Should assign to the file resource the same access role as its parent folder resource"';
+        ELSE
+            RAISE NOTICE 'Test 0? passed: "Should assign to the file resource the same access role as its parent folder resource"';
+        END IF;
 
-            INSERT
-              INTO user_role_resource (resource_id, user_id, role_id)
-            VALUES (_resources_folder_id, _user_id, _owner_role_id)
-                ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
-
-            -- validation test conditions
-            -- invalid user_id
-            -- invalid parent_folder_id, e.g non existent folder
-            -- invalid parent_folder_id type
-            -- non unique file name
-            -- invalid permissions
-
-            -- Test 0?: Should assign to the file resource the same access role as its parent folder resource
-            BEGIN
-                --  Arrange
-                --  create a new test folder
-                   INSERT
-                     INTO resources (type, created_by, updated_by, parent_folder_id)
-                   VALUES ('folder', _user_id, _user_id, _resources_folder_id)
-                RETURNING resources.id INTO _resources_folder_b_id;
-
-                INSERT
-                  INTO folders (resource_id, name) VALUES (_resources_folder_b_id, 'test_folder_b_' || _random_uuid);
-
-                -- assign to the parent folder a specific role, different from the default one
-                INSERT
-                  INTO user_role_resource (resource_id, user_id, role_id)
-                VALUES (_resources_folder_b_id, _user_id, (
-                    SELECT id
-                      FROM roles
-                     WHERE name = 'editor'::ROLE
-                                                          ))
-                    ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
-
-                -- Act
-                SELECT touch( --
-                               _user_id, --
-                               'file_with_same_role_as_parent_folder.txt', --
-                               'text/plain', --
-                               _resources_folder_b_id, --
-                               '/path/to/file', --
-                               1024 --
-                       )
-                  INTO _file_b_id;
-                -- Assert
-                -- check if the file resource has the same role as the parent folder
-
-                IF NOT exists (
-                    SELECT 1
-                      FROM user_role_resource urr
-                     WHERE urr.resource_id = (
-                         SELECT f.resource_id
-                           FROM files f
-                          WHERE f.id = _file_b_id
-                                             )
-                       AND urr.role_id = (
-                         SELECT r2.id
-                           FROM roles r2
-                          WHERE r2.name = 'editor'::ROLE
-                                         )
-                              ) THEN
-                    RAISE EXCEPTION 'Test 0? failed: "Should assign to the file resource the same access role as its parent folder resource"';
-                ELSE
-                    RAISE NOTICE 'Test 0? passed: "Should assign to the file resource the same access role as its parent folder resource"';
-                END IF;
-
-            END;
-
-
-        EXCEPTION
-            WHEN OTHERS THEN --
-                RAISE NOTICE 'Exception: %', sqlerrm;
-            -- Ensure that the exception won't prevent execution of the cleanup section
-        END;
 
         -- Tear down: Cleanup test data
-        BEGIN
-            DELETE FROM virtual_file_system.public.files f WHERE f.id = _folder_id;
-            DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_id;
-            DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
-            RAISE NOTICE 'Cleanup `touch` test data completed';
-        EXCEPTION
-            WHEN OTHERS THEN RAISE NOTICE 'Cleanup failed: %', sqlerrm;
-        END;
+        DELETE FROM resources r WHERE r.id = _resource_id_file;
+        DELETE FROM resources r WHERE r.id = _resources_id_root_folder;
+        DELETE FROM users u WHERE u.id = _user_id;
     END;
-$$;
+$$ LANGUAGE plpgsql;
+-- Test 0?: Roll back the transaction to leave the database unchanged
+ROLLBACK;

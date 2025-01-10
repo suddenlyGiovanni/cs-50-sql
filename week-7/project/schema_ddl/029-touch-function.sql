@@ -92,7 +92,7 @@ BEGIN
                                     ))
         ON CONFLICT (resource_id, user_id) DO UPDATE SET role_id = excluded.role_id;
 
-    RETURN _file_id;
+    RETURN _resource_id;
 
 END;
 $$ LANGUAGE plpgsql;
@@ -107,5 +107,5 @@ Parameters:
 - _storage_path: the path to the file in the storage system
 - _size: the size of the file in bytes
 Returns:
-- the id of the newly created file';
+- the resource_id of the newly created file';
 COMMIT;
