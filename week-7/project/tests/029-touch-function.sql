@@ -127,7 +127,7 @@ $$
                 );
         RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
     EXCEPTION
-        WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
+        WHEN OTHERS THEN IF sqlerrm LIKE 'Parent resource with id "%" does not exist.' THEN
             RAISE NOTICE 'Test 02 passed: "Should fail to create a File for a non-existent parent folder" - Expected exception: %',sqlerrm;
         ELSE
             RAISE NOTICE 'Test 02 failed: "Should fail to create a File for a non-existent parent folder" - Unexpected exception: %', sqlerrm;
@@ -161,18 +161,23 @@ $$
                   , _random_uuid)
         RETURNING id INTO _user_id;
 
-        SELECT mkdir('test_folder_' || _random_uuid, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id
-                                                     ), 'admin', NULL)
+        SELECT mkdir( --
+                       'test_folder_' || _random_uuid --
+                   , (
+                           SELECT u.username
+                             FROM users u
+                            WHERE u.id = _user_id
+                     ) --
+                   , 'admin' --
+                   , NULL --
+               )
           INTO _folder_id;
 
-        _resources_id_root_folder := (
-            SELECT f.resource_id
-              FROM folders f
-             WHERE f.id = _folder_id
-                                     );
+
+        SELECT f.resource_id --
+          INTO _resources_id_root_folder --
+          FROM folders f --
+         WHERE f.id = _folder_id;
 
            INSERT
              INTO resources (type, created_by, updated_by, parent_folder_id)
@@ -185,12 +190,12 @@ $$
             , 'test_file_' || _random_uuid --
             , 'text/plain' --
             , _resources_file_id_invalid --
-            , '/path/to/' || 'test_file_' || _random_uuid--
+            , '/path/to/' || 'test_file_' || _random_uuid --
             , 1024 --
                 );
         RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
     EXCEPTION
-        WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
+        WHEN OTHERS THEN IF sqlerrm LIKE 'Resource with id "%" is not a folder.' THEN
             RAISE NOTICE 'Test 03 passed: "Should fail to create a File for a parent folder of wrong type" - Expected exception: %',sqlerrm;
         ELSE
             RAISE NOTICE 'Test 03 failed: "Should fail to create a File for a parent folder of wrong type" - Unexpected exception: %', sqlerrm;
@@ -238,11 +243,11 @@ $$
                                                      ), 'owner', NULL)
           INTO _folder_id;
 
-        _resources_id_root_folder := (
-            SELECT f.resource_id
-              FROM folders f
-             WHERE f.id = _folder_id
-                                     );
+
+        SELECT f.resource_id --
+          INTO _resources_id_root_folder --
+          FROM folders f --
+         WHERE f.id = _folder_id;
 
 
         -- create a file resource

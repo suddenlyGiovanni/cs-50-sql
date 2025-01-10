@@ -27,15 +27,24 @@ BEGIN
         RAISE EXCEPTION 'User "%" does not exist', touch._user_id;
     END IF;
 
-    -- validate parent_folder_id
-    IF NOT exists(
-        SELECT 1 --
-          FROM resources r --
-         WHERE r.id = touch._parent_folder_id AND r.type = 'folder'
-                 ) THEN
-        RAISE EXCEPTION 'Parent folder with id "%" does not exist', _parent_folder_id;
+    -- Validate that parent resource exists
+    IF NOT exists (
+        SELECT 1
+          FROM resources r
+         WHERE r.id = _parent_folder_id
+                  ) THEN
+        RAISE EXCEPTION 'Parent resource with id "%" does not exist.', _parent_folder_id;
     END IF;
 
+    -- Validate that parent resource is a folder
+    IF NOT exists (
+        SELECT 1 --
+          FROM resources r --`
+         WHERE r.id = _parent_folder_id --
+           AND r.type = 'folder' --
+                  ) THEN
+        RAISE EXCEPTION 'Resource with id "%" is not a folder.', _parent_folder_id;
+    END IF;
 
     -- validate unique file name
     IF exists(
