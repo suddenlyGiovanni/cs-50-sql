@@ -165,6 +165,79 @@ $$ LANGUAGE plpgsql;
 ROLLBACK;
 
 
+-- Test 03: Should fail to create a file in a parent resource that is not a folder
+BEGIN;
+DO
+$$
+    DECLARE
+        _user_id                   INTEGER;
+        _random_uuid               UUID    := gen_random_uuid();
+        _user_name_valid           TEXT    := 'test_user_' || _random_uuid;
+        _user_email_valid          TEXT    := _user_name_valid || '@test.com';
+        _file_name                 TEXT    := 'test_file_' || _random_uuid;
+        _content_type              TEXT    := 'text/plain';
+        _file_path                 TEXT    := '/path/to/' || _file_name;
+        _file_size                 INTEGER := 1024;
+        _folder_id_valid           INTEGER;
+        _resources_file_id_invalid INT;
+
+    BEGIN
+        -- Arrange:
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+        RETURNING id INTO _user_id;
+
+        SELECT mkdir('test_folder_' || _random_uuid, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id
+                                                     ), 'admin', NULL)
+          INTO _folder_id_valid;
+
+           INSERT
+             INTO resources (type, created_by, updated_by, parent_folder_id)
+           VALUES ('file', _user_id, _user_id, (
+               SELECT f.resource_id
+                 FROM folders f
+                WHERE f.id = _folder_id_valid
+                                               ))
+        RETURNING resources.id INTO _resources_file_id_invalid;
+
+        -- Act and Assert
+        PERFORM touch( --
+                _user_id --
+            , _file_name --
+            , _content_type --
+            , _resources_file_id_invalid --
+            , _file_path--
+            , _file_size --
+                );
+        RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
+    EXCEPTION
+        WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
+            RAISE NOTICE 'Test 03 passed: "Should fail to create a File for a parent folder of wrong type" - Expected exception: %',sqlerrm;
+        ELSE
+            RAISE NOTICE 'Test 03 failed: "Should fail to create a File for a parent folder of wrong type" - Unexpected exception: %', sqlerrm;
+        END IF;
+
+
+        -- Tear down: Cleanup test data
+        DELETE FROM resources r WHERE r.id = _resources_file_id_invalid;
+        DELETE
+          FROM resources r
+         WHERE r.id = (
+             SELECT f.resource_id
+               FROM folders f
+              WHERE f.id = _folder_id_valid
+                      );
+        DELETE FROM users u WHERE u.id = _user_id;
+    END;
+$$ LANGUAGE plpgsql;
+-- Test 03: Roll back the transaction to leave the database unchanged
+ROLLBACK;
+
+
 /**
  * Unit test for touch function:
  * Should be able to create the following folder structure:
@@ -178,9 +251,6 @@ $$
         _user_name                      VARCHAR  := 'test_user_' || _random_uuid;
         _user_email                     VARCHAR  := _user_name || '@test.com';
         _user_id                        INT;
-        _invalid_user_id                INT      := (
-                                                        SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
-                                                    );
         _other_random_uuid              UUID     := gen_random_uuid();
         _other_user_name                VARCHAR  := 'test_user_' || _other_random_uuid;
         _other_user_email               VARCHAR  := _other_user_name || '@test.com';
@@ -188,9 +258,6 @@ $$
 
         -- resources:
         _resources_folder_id            INT;
-        _invalid_resources_folder_id    INT      := (
-                                                        SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
-                                                    );
         _invalid_resources_file_id      INT;
         _same_name_resources_file_id    INT;
         _other_user_resources_folder_id INT;
@@ -245,31 +312,6 @@ $$
             -- non unique file name
             -- invalid permissions
 
-
-            -- Test 03: Should fail to create a file in a parent resource that is not a folder
-            BEGIN
-                -- create a file resource
-                   INSERT
-                     INTO resources (type, created_by, updated_by, parent_folder_id)
-                   VALUES ('file', _user_id, _user_id, _resources_folder_id)
-                RETURNING resources.id INTO _invalid_resources_file_id;
-
-                PERFORM touch( --
-                        _user_id, --
-                        'wrong_type_parent_folder_test_file', --
-                        'text/plain', --
-                        _invalid_resources_file_id, --
-                        '/path/to/file', --
-                        1024 --
-                        );
-                RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
-            EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'Parent folder with id "%" does not exist' THEN
-                    RAISE NOTICE 'Test 03 passed: "Should fail to create a File for a parent folder of wrong type" - Expected exception: %',sqlerrm;
-                ELSE
-                    RAISE NOTICE 'Test 03 failed: "Should fail to create a File for a parent folder of wrong type" - Unexpected exception: %', sqlerrm;
-                END IF;
-            END;
 
             -- Test 04: Should fail to crate a file when a file with the same name already exists in the parent folder
             BEGIN
