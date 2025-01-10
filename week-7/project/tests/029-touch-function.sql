@@ -238,6 +238,83 @@ $$ LANGUAGE plpgsql;
 ROLLBACK;
 
 
+-- Test 04: Should fail to crate a file when a file with the same name already exists in the parent folder
+BEGIN;
+DO
+$$
+    DECLARE
+        _user_id                     INTEGER;
+        _random_uuid                 UUID    := gen_random_uuid();
+        _user_name_valid             TEXT    := 'test_user_' || _random_uuid;
+        _user_email_valid            TEXT    := _user_name_valid || '@test.com';
+        _file_name_duplicated        TEXT    := 'test_file_' || _random_uuid;
+        _content_type                TEXT    := 'text/plain';
+        _file_path                   TEXT    := '/path/to/' || _file_name_duplicated;
+        _file_size                   INTEGER := 1024;
+        _folder_id                   INTEGER;
+        _resources_file_id_same_name INTEGER;
+        _resources_id_root_folder    INTEGER;
+
+    BEGIN
+        -- Arrange:
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+        RETURNING id INTO _user_id;
+
+        SELECT mkdir('test_folder_' || _random_uuid, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id
+                                                     ), 'owner', NULL)
+          INTO _folder_id;
+
+        _resources_id_root_folder := (
+            SELECT f.resource_id
+              FROM folders f
+             WHERE f.id = _folder_id
+                                     );
+
+
+        -- create a file resource
+           INSERT
+             INTO resources (type, created_by, updated_by, parent_folder_id)
+           VALUES ('file', _user_id, _user_id, _resources_id_root_folder)
+        RETURNING resources.id INTO _resources_file_id_same_name;
+
+        -- crate a file with an arbitrary name
+        INSERT
+          INTO files (resource_id, name, mime_type, storage_path)
+        VALUES (_resources_file_id_same_name, _file_name_duplicated, _content_type, _file_path);
+
+        -- Act and Assert
+        PERFORM touch( --
+                _user_id --
+            , _file_name_duplicated --
+            , _content_type--
+            , _resources_id_root_folder --
+            , _file_path--
+            , _file_size --
+                );
+        RAISE EXCEPTION 'Validation for unique file name failed to raise exception';
+    EXCEPTION
+        WHEN OTHERS THEN IF sqlerrm LIKE 'File with name "%" already exists in the parent folder "%"' THEN
+            RAISE NOTICE 'Test 04 passed: "Should fail to create a File for an already existing file resource with the same name" - Expected exception: %',sqlerrm;
+        ELSE
+            RAISE NOTICE 'Test 04 failed: "Should fail to create a File for an already existing file resource with the same name" - Unexpected exception: %', sqlerrm;
+        END IF;
+
+
+        -- Tear down: Cleanup test data
+        DELETE FROM resources r WHERE r.id = _resources_file_id_same_name;
+        DELETE FROM resources r WHERE r.id = _resources_id_root_folder;
+        DELETE FROM users u WHERE u.id = _user_id;
+    END;
+$$ LANGUAGE plpgsql;
+-- Test 04: Roll back the transaction to leave the database unchanged
+ROLLBACK;
+
+
 /**
  * Unit test for touch function:
  * Should be able to create the following folder structure:
@@ -311,38 +388,6 @@ $$
             -- invalid parent_folder_id type
             -- non unique file name
             -- invalid permissions
-
-
-            -- Test 04: Should fail to crate a file when a file with the same name already exists in the parent folder
-            BEGIN
-                -- create a file resource
-                   INSERT
-                     INTO resources (type, created_by, updated_by, parent_folder_id)
-                   VALUES ('file', _user_id, _user_id, _resources_folder_id)
-                RETURNING resources.id INTO _same_name_resources_file_id;
-
-                -- crate a file with an arbitrary name
-                INSERT
-                  INTO files (resource_id, name, mime_type, storage_path)
-                VALUES (_same_name_resources_file_id, 'same_name_file.txt', 'text/plain', '/path/to/file');
-
-
-                PERFORM touch( --
-                        _user_id, --
-                        'same_name_file.txt', --
-                        'text/plain', --
-                        _resources_folder_id, --
-                        '/path/to/file', --
-                        1024 --
-                        );
-                RAISE EXCEPTION 'Validation for unique file name failed to raise exception';
-            EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'File with name "%" already exists in the parent folder' THEN
-                    RAISE NOTICE 'Test 04 passed: "Should fail to create a File for an already existing file resource with the same name" - Expected exception: %',sqlerrm;
-                ELSE
-                    RAISE NOTICE 'Test 04 failed: "Should fail to create a File for an already existing file resource with the same name" - Unexpected exception: %', sqlerrm;
-                END IF;
-            END;
 
 
             -- Test 05: Should fail to crate a file when the user has no write permission on the parent_folder_id
