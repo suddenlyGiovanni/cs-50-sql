@@ -1,4 +1,95 @@
+-- Set the search path to include your schema
 SET search_path TO virtual_file_system, public;
+
+
+-- Test 01: Should fail to create a file for a non-existent user
+BEGIN;
+DO
+$$
+    DECLARE
+        _random_uuid       UUID    := gen_random_uuid();
+        _user_id_valid     INTEGER;
+        _user_name_valid   TEXT    := 'test_user_' || _random_uuid;
+        _user_email_valid  TEXT    := _user_name_valid || '@test.com';
+        _invalid_user_id   INTEGER;
+        _valid_folder_id   INTEGER;
+        _unique_file_name  TEXT    := 'test_file_' || _random_uuid;
+        _content_type      TEXT    := 'text/plain';
+        _file_path         TEXT    := '/path/to/' || _unique_file_name;
+        _file_size         INTEGER := 1024;
+        _exception_message TEXT;
+    BEGIN
+
+        -- Create a root test user
+           INSERT
+             INTO users (username, email, hashed_password)
+           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+        RETURNING id INTO _user_id_valid;
+
+
+        -- Arrange: Set an invalid user ID (assuming negative IDs are invalid)
+        _invalid_user_id := (
+            SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
+                            );
+
+        -- Confirm that the invalid user does not exist
+        IF exists (
+            SELECT 1
+              FROM users
+             WHERE id = _invalid_user_id
+                  ) THEN
+            RAISE EXCEPTION 'Test 01: Setup error: _invalid_user_id % already exists.', _invalid_user_id;
+        END IF;
+
+        SELECT mkdir('test_folder_' || _random_uuid, (
+            SELECT u.username
+              FROM users u
+             WHERE u.id = _user_id_valid
+                                                     ), 'admin', NULL)
+          INTO _valid_folder_id;
+
+
+        -- Act and Assert: Attempt to create a file with the invalid user ID
+        BEGIN
+            PERFORM touch(_invalid_user_id --
+                , _unique_file_name --
+                , _content_type --
+                , (
+                              SELECT f.resource_id
+                                FROM folders f
+                               WHERE f.id = _valid_folder_id
+                  ) --
+                , _file_path --
+                , _file_size --
+                    );
+            -- If no exception is raised, the test fails
+            RAISE EXCEPTION 'Test 01 failed: No exception raised for non-existent user.';
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Capture the exception message
+                _exception_message := sqlerrm;
+
+                -- Check if the exception message matches the expected pattern
+                IF _exception_message LIKE 'User "%" %does not exist%' THEN
+                    RAISE NOTICE 'Test 01 passed: Expected exception caught - %', _exception_message;
+                ELSE
+                    RAISE EXCEPTION 'Test 01 failed: Unexpected exception - %', _exception_message;
+                END IF;
+        END;
+        -- Tear down: Cleanup test data
+        DELETE
+          FROM virtual_file_system.public.resources r
+         WHERE r.id = (
+             SELECT f.resource_id
+               FROM folders f
+              WHERE f.id = _valid_folder_id
+                      );
+        DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id_valid;
+    END;
+$$ LANGUAGE plpgsql;
+-- Test 01: Roll back the transaction to leave the database unchanged
+ROLLBACK;
+
 
 /**
  * Unit test for touch function:
@@ -80,25 +171,6 @@ $$
             -- non unique file name
             -- invalid permissions
 
-
-            -- Test 01: Should fail to create a file for a non-existent user
-            BEGIN
-                PERFORM touch( --
-                        _invalid_user_id, --
-                        'non_existent_user_test_file', --
-                        'text/plain', --
-                        _resources_folder_id, --
-                        '/path/to/file', --
-                        1024 --
-                        );
-                RAISE EXCEPTION 'Validation for non-existent user failed to raise exception';
-            EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not exist' THEN
-                    RAISE NOTICE 'Test 01 passed: "Should fail to create a File for a non-existent user" - Expected exception: %',sqlerrm;
-                ELSE
-                    RAISE NOTICE 'Test 01 failed: "Should fail to create a File for a non-existent user" - Unexpected exception: %', sqlerrm;
-                END IF;
-            END;
 
             -- Test 02: Should fail to create a file in a non-existent parent folder
             BEGIN
