@@ -7,23 +7,18 @@ BEGIN;
 DO
 $$
     DECLARE
-        _random_uuid       UUID    := gen_random_uuid();
-        _user_id           INTEGER;
-        _user_name_valid   TEXT    := 'test_user_' || _random_uuid;
-        _user_email_valid  TEXT    := _user_name_valid || '@test.com';
-        _user_id_invalid   INTEGER;
-        _folder_id_valid   INTEGER;
-        _file_name         TEXT    := 'test_file_' || _random_uuid;
-        _content_type      TEXT    := 'text/plain';
-        _file_path         TEXT    := '/path/to/' || _file_name;
-        _file_size         INTEGER := 1024;
-        _exception_message TEXT;
+        _random_uuid              UUID := gen_random_uuid();
+        _user_id                  INTEGER;
+        _user_id_invalid          INTEGER;
+        _folder_id                INTEGER;
+        _exception_message        TEXT;
+        _resources_id_root_folder INTEGER;
     BEGIN
 
         -- Create a root test user
            INSERT
              INTO users (username, email, hashed_password)
-           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+           VALUES ('test_user_' || _random_uuid, 'test_user_' || _random_uuid || '@test.com', _random_uuid)
         RETURNING id INTO _user_id;
 
 
@@ -46,21 +41,23 @@ $$
               FROM users u
              WHERE u.id = _user_id
                                                      ), 'admin', NULL)
-          INTO _folder_id_valid;
+          INTO _folder_id;
+
+        _resources_id_root_folder := (
+            SELECT f.resource_id
+              FROM folders f
+             WHERE f.id = _folder_id
+                                     );
 
 
         -- Act and Assert: Attempt to create a file with the invalid user ID
         BEGIN
             PERFORM touch(_user_id_invalid --
-                , _file_name --
-                , _content_type --
-                , (
-                              SELECT f.resource_id
-                                FROM folders f
-                               WHERE f.id = _folder_id_valid
-                  ) --
-                , _file_path --
-                , _file_size --
+                , 'test_file_' || _random_uuid --
+                , 'text/plain' --
+                , _resources_id_root_folder --
+                , '/path/to/' || 'test_file_' || _random_uuid --
+                , 1024 --
                     );
             -- If no exception is raised, the test fails
             RAISE EXCEPTION 'Test 01 failed: No exception raised for non-existent user.';
@@ -82,7 +79,7 @@ $$
          WHERE r.id = (
              SELECT f.resource_id
                FROM folders f
-              WHERE f.id = _folder_id_valid
+              WHERE f.id = _folder_id
                       );
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
     END;
@@ -97,17 +94,11 @@ DO
 $$
     DECLARE
         _user_id                     INTEGER;
-        _random_uuid                 UUID    := gen_random_uuid();
-        _user_name_valid             TEXT    := 'test_user_' || _random_uuid;
-        _user_email_valid            TEXT    := _user_name_valid || '@test.com';
-        _resources_folder_id_invalid INT     := (
-                                                    SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
-                                                );
-        _file_name                   TEXT    := 'test_file_' || _random_uuid;
-        _content_type                TEXT    := 'text/plain';
-        _file_path                   TEXT    := '/path/to/' || _file_name;
-        _file_size                   INTEGER := 1024;
-        _folder_id_valid             INTEGER;
+        _random_uuid                 UUID := gen_random_uuid();
+        _resources_folder_id_invalid INT  := (
+                                                 SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
+                                             );
+
 
     BEGIN
         -- Arrange:
@@ -121,25 +112,18 @@ $$
         -- Create a root test user
            INSERT
              INTO users (username, email, hashed_password)
-           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+           VALUES ('test_user_' || _random_uuid, 'test_user_' || _random_uuid || '@test.com', _random_uuid)
         RETURNING id INTO _user_id;
-
-        SELECT mkdir('test_folder_' || _random_uuid, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id
-                                                     ), 'admin', NULL)
-          INTO _folder_id_valid;
 
 
         -- Act and Assert
         PERFORM touch( --
                 _user_id --
-            , _file_name --
-            , _content_type --
+            , 'test_file_' || _random_uuid --
+            , 'text/plain' --
             , _resources_folder_id_invalid --
-            , _file_path --
-            , _file_size --
+            , '/path/to/' || 'test_file_' || _random_uuid --
+            , 1024 --
                 );
         RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
     EXCEPTION
@@ -149,15 +133,7 @@ $$
             RAISE NOTICE 'Test 02 failed: "Should fail to create a File for a non-existent parent folder" - Unexpected exception: %', sqlerrm;
         END IF;
 
-
         -- Tear down: Cleanup test data
-        DELETE
-          FROM virtual_file_system.public.resources r
-         WHERE r.id = (
-             SELECT f.resource_id
-               FROM folders f
-              WHERE f.id = _folder_id_valid
-                      );
         DELETE FROM virtual_file_system.public.users u WHERE u.id = _user_id;
     END;
 $$ LANGUAGE plpgsql;
@@ -171,21 +147,18 @@ DO
 $$
     DECLARE
         _user_id                   INTEGER;
-        _random_uuid               UUID    := gen_random_uuid();
-        _user_name_valid           TEXT    := 'test_user_' || _random_uuid;
-        _user_email_valid          TEXT    := _user_name_valid || '@test.com';
-        _file_name                 TEXT    := 'test_file_' || _random_uuid;
-        _content_type              TEXT    := 'text/plain';
-        _file_path                 TEXT    := '/path/to/' || _file_name;
-        _file_size                 INTEGER := 1024;
-        _folder_id_valid           INTEGER;
-        _resources_file_id_invalid INT;
+        _random_uuid               UUID := gen_random_uuid();
+        _folder_id                 INTEGER;
+        _resources_file_id_invalid INTEGER;
+        _resources_id_root_folder  INTEGER;
 
     BEGIN
         -- Arrange:
            INSERT
              INTO users (username, email, hashed_password)
-           VALUES (_user_name_valid, _user_email_valid, _random_uuid)
+           VALUES ( 'test_user_' || _random_uuid --
+                  , 'test_user_' || _random_uuid || '@test.com' --
+                  , _random_uuid)
         RETURNING id INTO _user_id;
 
         SELECT mkdir('test_folder_' || _random_uuid, (
@@ -193,25 +166,27 @@ $$
               FROM users u
              WHERE u.id = _user_id
                                                      ), 'admin', NULL)
-          INTO _folder_id_valid;
+          INTO _folder_id;
+
+        _resources_id_root_folder := (
+            SELECT f.resource_id
+              FROM folders f
+             WHERE f.id = _folder_id
+                                     );
 
            INSERT
              INTO resources (type, created_by, updated_by, parent_folder_id)
-           VALUES ('file', _user_id, _user_id, (
-               SELECT f.resource_id
-                 FROM folders f
-                WHERE f.id = _folder_id_valid
-                                               ))
+           VALUES ('file', _user_id, _user_id, _resources_id_root_folder)
         RETURNING resources.id INTO _resources_file_id_invalid;
 
         -- Act and Assert
         PERFORM touch( --
                 _user_id --
-            , _file_name --
-            , _content_type --
+            , 'test_file_' || _random_uuid --
+            , 'text/plain' --
             , _resources_file_id_invalid --
-            , _file_path--
-            , _file_size --
+            , '/path/to/' || 'test_file_' || _random_uuid--
+            , 1024 --
                 );
         RAISE EXCEPTION 'Validation for wrong parent_folder_id failed to raise exception';
     EXCEPTION
@@ -224,13 +199,7 @@ $$
 
         -- Tear down: Cleanup test data
         DELETE FROM resources r WHERE r.id = _resources_file_id_invalid;
-        DELETE
-          FROM resources r
-         WHERE r.id = (
-             SELECT f.resource_id
-               FROM folders f
-              WHERE f.id = _folder_id_valid
-                      );
+        DELETE FROM resources r WHERE r.id = _resources_id_root_folder;
         DELETE FROM users u WHERE u.id = _user_id;
     END;
 $$ LANGUAGE plpgsql;
@@ -304,7 +273,6 @@ $$
             RAISE NOTICE 'Test 04 failed: "Should fail to create a File for an already existing file resource with the same name" - Unexpected exception: %', sqlerrm;
         END IF;
 
-
         -- Tear down: Cleanup test data
         DELETE FROM resources r WHERE r.id = _resources_file_id_same_name;
         DELETE FROM resources r WHERE r.id = _resources_id_root_folder;
@@ -322,12 +290,8 @@ $$
     DECLARE
         _user_id_a                INTEGER;
         _user_id_b                INTEGER;
-        _random_uuid_a            UUID    := gen_random_uuid();
-        _random_uuid_b            UUID    := gen_random_uuid();
-        _file_name                TEXT    := 'test_file_' || _random_uuid_a;
-        _content_type             TEXT    := 'text/plain';
-        _file_path                TEXT    := '/path/to/' || _file_name;
-        _file_size                INTEGER := 1024;
+        _random_uuid_a            UUID := gen_random_uuid();
+        _random_uuid_b            UUID := gen_random_uuid();
         _folder_id                INTEGER;
         _resources_id_root_folder INTEGER;
 
@@ -371,11 +335,11 @@ $$
         -- Act and Assert
         PERFORM touch( --
                 _user_id_b --
-            , _file_name --
-            , _content_type --
+            , 'test_file_' || _random_uuid_b --
+            , 'text/plain' --
             , _resources_id_root_folder -- for which the user has no write permission
-            , _file_path --
-            , _file_size --
+            , '/path/to/' || 'test_file_' || _random_uuid_b --
+            , 1024 --
                 );
 
         -- Assert
