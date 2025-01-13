@@ -49,7 +49,7 @@ $$
 
             -- Act: Create folder "_folder_a"
             SELECT INTO _resources_folder_a_id
-                   mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
+                   mkdir(_folder_a, _user_id, 'owner'::ROLE, NULL);
 
             -- Assert:
             -- Test 1: Should be able to create a top-level folder resource `_folder_a` with mkdir function
@@ -104,7 +104,7 @@ $$
 
             -- Act: Create sub-folder "_folder_aa_1" under folder "_folder_a"
             SELECT INTO _resources_folder_aa_1_id
-                   mkdir(_folder_aa_1, _user_name, 'admin'::ROLE_TYPE, _resources_folder_a_id);
+                   mkdir(_folder_aa_1, _user_id, 'admin'::ROLE, _resources_folder_a_id);
 
             -- Assert:
             -- Test 4: Should be able to create a `_folder_aa_1` folder resource in the `_folder_a` folder with mkdir function
@@ -148,7 +148,7 @@ $$
                        AND uur.role_id = (
                          SELECT roles.id
                            FROM roles
-                          WHERE roles.name = 'admin'
+                          WHERE roles.name = 'admin'::ROLE
                                          )
                          ) THEN
                     RAISE NOTICE 'Test 06 passed: "Should be able to create the correct resource/role association for the `_folder_aa_1` with mkdir function"';
@@ -160,7 +160,7 @@ $$
 
             -- Act: Create folder "_folder_b" with a different role type
             SELECT INTO _resources_folder_b_id
-                   mkdir(_folder_b, _user_name, 'editor'::ROLE_TYPE, NULL);
+                   mkdir(_folder_b, _user_id, 'editor'::ROLE, NULL);
 
 
             -- Test 7: Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function
@@ -172,7 +172,7 @@ $$
                    AND uur.role_id = (
                      SELECT roles.id
                        FROM roles
-                      WHERE roles.name = 'editor'
+                      WHERE roles.name = 'editor'::ROLE
                                      )
                      ) THEN
                 RAISE NOTICE 'Test 07 passed: "Should be able to create a `_folder_b` as top level folder resource with `editor` role with mkdir function"';
@@ -184,7 +184,7 @@ $$
             -- Test 8: Should fail to create a folder with NULL name
             BEGIN
                 SELECT INTO _resources_folder_null_id
-                       mkdir(NULL, _user_name, 'owner'::ROLE_TYPE, NULL);
+                       mkdir(NULL, _user_id, 'owner'::ROLE, NULL);
                 RAISE EXCEPTION 'Validation for NULL folder name  failed to raise an exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Folder name cannot be null or empty string' THEN
@@ -198,7 +198,7 @@ $$
             -- Test 9: Should fail to create a folder with non-existent parent folder ID
             BEGIN
                 SELECT INTO _resources_folder_broken_id
-                       mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, -1);
+                       mkdir(_folder_a, _user_id, 'owner'::ROLE, -1);
                 RAISE EXCEPTION 'Validation for non-existent parent folder ID failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm = 'Parent folder with id "-1" does not exist' THEN
@@ -210,7 +210,7 @@ $$
 
             -- Test 10: Should fail to create a duplicate folder `_folder_a` in the same parent folder
             BEGIN
-                PERFORM mkdir(_folder_a, _user_name, 'owner'::ROLE_TYPE, NULL);
+                PERFORM mkdir(_folder_a, _user_id, 'owner'::ROLE, NULL);
                 RAISE EXCEPTION 'Validation for duplicate folder name failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm LIKE 'Folder with name "%" already exists as a root resource' THEN
@@ -222,7 +222,7 @@ $$
 
             -- Test 11: Should fail to create a folder for a non-existent user
             BEGIN
-                PERFORM mkdir(_folder_a, non_existent_user, 'owner'::ROLE_TYPE, NULL);
+                PERFORM mkdir(_folder_a, -1, 'owner'::ROLE, NULL);
                 RAISE EXCEPTION 'Validation for non-existent user failed to raise exception';
             EXCEPTION
                 WHEN OTHERS THEN IF sqlerrm LIKE 'User "%" does not exist' THEN
@@ -235,10 +235,10 @@ $$
 
             -- Test 12: Should fail to create a folder for a non-existent role
             BEGIN
-                PERFORM mkdir(_folder_a, _user_name, non_existent_role::ROLE_TYPE, NULL);
+                PERFORM mkdir(_folder_a, _user_id, 'master_of_the_universe', NULL);
                 RAISE EXCEPTION 'Validation for non-existent role failed to raise exception';
             EXCEPTION
-                WHEN OTHERS THEN IF sqlerrm LIKE 'invalid input value for enum role_type: "non_existent_role"' THEN
+                WHEN OTHERS THEN IF sqlerrm LIKE 'invalid input value for enum role: %"' THEN
                     RAISE NOTICE 'Test 12 passed: "Should fail to create a folder for a non-existent role" - Expected exception: %',sqlerrm;
                 ELSE
                     RAISE NOTICE 'Test 12 failed: "Should fail to create a folder for a non-existent role" - Unexpected exception: %', sqlerrm;

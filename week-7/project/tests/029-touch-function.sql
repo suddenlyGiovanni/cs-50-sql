@@ -36,18 +36,8 @@ $$
             RAISE EXCEPTION 'Test 01: Setup error: _invalid_user_id % already exists.', _user_id_invalid;
         END IF;
 
-        SELECT mkdir('test_folder_' || _random_uuid, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id
-                                                     ), 'admin', NULL)
-          INTO _folder_id;
-
-        _resources_id_root_folder := (
-            SELECT f.resource_id
-              FROM folders f
-             WHERE f.id = _folder_id
-                                     );
+        SELECT mkdir('test_folder_' || _random_uuid, _user_id, 'admin'::ROLE, NULL)
+          INTO _resources_id_root_folder;
 
 
         -- Act and Assert: Attempt to create a file with the invalid user ID
@@ -98,7 +88,6 @@ $$
         _resources_folder_id_invalid INT  := (
                                                  SELECT floor(random() * (9999999 - 1000000 + 1) + 1000000)::INT
                                              );
-
 
     BEGIN
         -- Arrange:
@@ -163,21 +152,12 @@ $$
 
         SELECT mkdir( --
                        'test_folder_' || _random_uuid --
-                   , (
-                           SELECT u.username
-                             FROM users u
-                            WHERE u.id = _user_id
-                     ) --
-                   , 'admin' --
+                   , _user_id --
+                   , 'admin'::ROLE --
                    , NULL --
                )
-          INTO _folder_id;
+          INTO _resources_id_root_folder;
 
-
-        SELECT f.resource_id --
-          INTO _resources_id_root_folder --
-          FROM folders f --
-         WHERE f.id = _folder_id;
 
            INSERT
              INTO resources (type, created_by, updated_by, parent_folder_id)
@@ -236,18 +216,8 @@ $$
            VALUES (_user_name_valid, _user_email_valid, _random_uuid)
         RETURNING id INTO _user_id;
 
-        SELECT mkdir('test_folder_' || _random_uuid, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id
-                                                     ), 'owner', NULL)
-          INTO _folder_id;
-
-
-        SELECT f.resource_id --
-          INTO _resources_id_root_folder --
-          FROM folders f --
-         WHERE f.id = _folder_id;
+        SELECT mkdir('test_folder_' || _random_uuid, _user_id, 'owner'::ROLE, NULL)
+          INTO _resources_id_root_folder;
 
 
         -- create a file resource
@@ -312,18 +282,9 @@ $$
            VALUES ('test_user_' || _random_uuid_b, 'test_user_' || _random_uuid_b || '@test.com', _random_uuid_b)
         RETURNING users.id INTO _user_id_b;
 
-        SELECT mkdir('test_folder_' || _random_uuid_a, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id_a
-                                                       ), 'owner', NULL)
-          INTO _folder_id;
+        SELECT mkdir('test_folder_' || _random_uuid_a, _user_id_a, 'owner'::ROLE, NULL)
+          INTO _resources_id_root_folder;
 
-        _resources_id_root_folder := (
-            SELECT f.resource_id
-              FROM folders f
-             WHERE f.id = _folder_id
-                                     );
 
         INSERT
           INTO user_role_resource (resource_id, user_id, role_id)
@@ -386,18 +347,8 @@ $$
                   , _random_uuid)
         RETURNING id INTO _user_id;
 
-        SELECT mkdir('test_folder_' || _random_uuid, (
-            SELECT u.username
-              FROM users u
-             WHERE u.id = _user_id
-                                                     ), 'admin'::ROLE, NULL)
-          INTO _folder_id;
-
-        _resources_id_root_folder := (
-            SELECT f.resource_id
-              FROM folders f
-             WHERE f.id = _folder_id
-                                     );
+        SELECT mkdir('test_folder_' || _random_uuid, _user_id, 'admin'::ROLE, NULL)
+          INTO _resources_id_root_folder;
 
         -- Act
         SELECT touch( --
