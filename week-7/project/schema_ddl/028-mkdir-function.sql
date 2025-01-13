@@ -3,14 +3,13 @@ SET search_path TO virtual_file_system, public;
 BEGIN;
 
 CREATE OR REPLACE FUNCTION mkdir(
-    folder_name TEXT,
-    username TEXT,
-    role_type ROLE DEFAULT 'owner'::ROLE,
-    parent_folder_id INTEGER DEFAULT NULL
+    _folder_name TEXT,
+    _user_id INTEGER,
+    _role_type ROLE DEFAULT 'owner'::ROLE,
+    _parent_folder_id INTEGER DEFAULT NULL
 ) RETURNS INTEGER AS
 $$
 DECLARE
-    _user_id     INTEGER;
     _resource_id INTEGER;
     _folder_id   INTEGER;
     _role_id     SMALLINT;
@@ -20,54 +19,54 @@ BEGIN
     */
 
     -- validate folder_name
-    IF mkdir.folder_name IS NULL OR mkdir.folder_name = '' THEN
+    IF mkdir._folder_name IS NULL OR mkdir._folder_name = '' THEN
         RAISE EXCEPTION 'Folder name cannot be null or empty string';
     END IF;
 
     -- validate parent_folder_id
-    IF mkdir.parent_folder_id IS NOT NULL THEN
+    IF mkdir._parent_folder_id IS NOT NULL THEN
         IF NOT exists(
             SELECT 1 --
               FROM resources r --
-             WHERE r.id = mkdir.parent_folder_id AND r.type = 'folder'
+             WHERE r.id = mkdir._parent_folder_id AND r.type = 'folder'::RESOURCE
                      ) THEN
-            RAISE EXCEPTION 'Parent folder with id "%" does not exist', parent_folder_id;
+            RAISE EXCEPTION 'Parent folder with id "%" does not exist', _parent_folder_id;
         END IF;
     END IF;
 
     -- validate unique folder name
     IF exists(
         SELECT 1
-          FROM resources
-              JOIN folders ON folders.resource_id = resources.id
-         WHERE mkdir.parent_folder_id = resources.parent_folder_id
-           AND resources.type = 'folder'
-           AND mkdir.folder_name = folders.name
+          FROM resources   r
+              JOIN folders f ON f.resource_id = r.id
+         WHERE mkdir._parent_folder_id = r.parent_folder_id
+           AND r.type = 'folder'::RESOURCE
+           AND mkdir._folder_name = f.name
              ) THEN
-        RAISE EXCEPTION 'Folder with name "%" already exists in the parent folder', mkdir.folder_name;
+        RAISE EXCEPTION 'Folder with name "%" already exists in the parent folder', mkdir._folder_name;
     END IF;
 
     -- Validate and retrieve user_id
     IF NOT exists (
         SELECT 1
-          FROM users
-         WHERE mkdir.username = users.username
+          FROM users u
+         WHERE mkdir._user_id = u.id
                   ) THEN
-        RAISE EXCEPTION 'User "%" does not exist', mkdir.username;
-    ELSE
-        SELECT users.id INTO _user_id FROM users WHERE mkdir.username = users.username;
+        RAISE EXCEPTION 'User "%" does not exist', mkdir._user_id;
     END IF;
 
     -- Validate and retrieve role_id
     IF NOT exists (
         SELECT 1
-          FROM roles
-         WHERE mkdir.role_type = roles.name
+          FROM roles r
+         WHERE mkdir._role_type = r.name
                   ) THEN
-        RAISE EXCEPTION 'Role % not found', mkdir.role_type;
+        RAISE EXCEPTION 'Role % not found', mkdir._role_type;
     ELSE
-        SELECT roles.id INTO _role_id FROM roles WHERE mkdir.role_type = roles.name;
+        SELECT roles.id INTO _role_id FROM roles WHERE mkdir._role_type = roles.name;
     END IF;
+
+    -- TODO: needs to validate the authorisation of the user to create the folder
 
     /*
      * Core logic:
@@ -79,15 +78,14 @@ BEGIN
     -- Create a new resource
        INSERT
          INTO resources (type, created_by, updated_by, parent_folder_id)
-       VALUES ('folder', _user_id, _user_id, mkdir.parent_folder_id)
+       VALUES ('folder', _user_id, _user_id, mkdir._parent_folder_id)
     RETURNING resources.id INTO _resource_id;
 
-    -- TODO: needs to validate the authorisation of the user to create the folder
 
     -- Create a new `folder` resource
        INSERT
          INTO folders (resource_id, name) --
-       VALUES (_resource_id, mkdir.folder_name) --
+       VALUES (_resource_id, mkdir._folder_name) --
     RETURNING folders.id INTO _folder_id;
 
 
@@ -108,11 +106,11 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION mkdir IS 'Create a new folder for a user with the specified role
 
 Parameters:
-- folder_name (TEXT): The name of the new folder to be created
-- username (TEXT): The unique username of the user who will own the folder
-- role_type (ROLE, DEFAULT "owner"): The role type to be assigned to the folder
-- parent_folder_id (INTEGER, DEFAULT NULL): The ID of the parent folder, if any
+- _folder_name (TEXT): The name of the new folder to be created
+- _user_id (TEXT): The id of the user who will own the folder
+- _role_type (ROLE, DEFAULT "owner"): The role type to be assigned to the folder
+- _parent_folder_id (INTEGER, DEFAULT NULL): The ID of the parent folder, if any
 Returns:
-- INTEGER: The ID of the newly created folder
+- INTEGER: The ID of the newly created folder resource
 ';
 COMMIT;
