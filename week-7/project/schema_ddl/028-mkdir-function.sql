@@ -66,7 +66,16 @@ BEGIN
         SELECT roles.id INTO _role_id FROM roles WHERE mkdir._role_type = roles.name;
     END IF;
 
-    -- TODO: needs to validate the authorisation of the user to create the folder
+    -- validate permission to create a folder in the parent folder
+    IF NOT exists(
+        SELECT 1
+          FROM user_role_resource_access_view urrav
+         WHERE urrav.user_id = _user_id
+           AND urrav.resource_id = mkdir._parent_folder_id
+           AND urrav.write IS TRUE
+                 ) THEN
+        RAISE EXCEPTION 'User "%" does not have "write" permission on the parent folder "%".', mkdir._user_id , mkdir._parent_folder_id;
+    END IF;
 
     /*
      * Core logic:
