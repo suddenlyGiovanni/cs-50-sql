@@ -19,11 +19,13 @@ $$
         _random_uuid                UUID    := gen_random_uuid();
         _user_name                  VARCHAR := 'test_user_' || _random_uuid;
         _user_email                 VARCHAR := _user_name || '@test.com';
-        _user_id                    INT;
+        _user_id                    INTEGER;
+        _other_user_id              INTEGER;
 
         -- resources:
-        _resources_folder_a_id      INT;
-        _resources_folder_aa_1_id   INT;
+        _resources_folder_a_id      INTEGER;
+        _resources_folder_aa_1_id   INTEGER;
+        _other_folder_id            INTEGER;
 
         -- folders
         _folder_a                   VARCHAR := 'test_folder_' || _random_uuid || '_a';
@@ -34,8 +36,6 @@ $$
         _resources_folder_null_id   INT;
         _resources_folder_broken_id INT;
         _folder_b                   VARCHAR := 'test_folder_' || _random_uuid || '_b';
-        non_existent_user           VARCHAR := 'non_existent_user_' || _random_uuid;
-        non_existent_role           VARCHAR := 'non_existent_role';
 
     BEGIN
         -- Outer block to handle exceptions and ensure cleanup
@@ -245,6 +245,29 @@ $$
                 END IF;
             END;
 
+            -- Test 13: Should fail to create a folder if the user does not have write permissions on the parent folder
+            BEGIN
+                -- Create a parent folder owned by a different user
+                   INSERT
+                     INTO users (username, email, hashed_password)
+                   VALUES ('other_user' || _random_uuid, 'other_user' || _random_uuid || '@test.com', _random_uuid || 'other_user')
+                RETURNING id INTO _other_user_id; -- Placeholder for other user setup
+                SELECT mkdir('other_folder' || _random_uuid, _other_user_id, 'owner'::ROLE, NULL)
+                  INTO _other_folder_id;
+                -- Placeholder for other folder creation
+
+                -- Attempt to create a subfolder under other_folder as the original user. This should fail due to lack of write permissions
+                PERFORM mkdir(_folder_aa_1, _user_id, 'owner'::ROLE, _other_folder_id);
+                RAISE EXCEPTION 'Validation for missing write permission on parent folder failed to raise exception';
+            EXCEPTION
+                WHEN OTHERS THEN IF sqlerrm LIKE
+                                    'User "%" does not have "write" permission on the parent folder "%".' THEN
+                    RAISE NOTICE 'Test 13 passed: "Should fail to create a folder if the user does not have write permissions on the parent folder" - Expected exception: %', sqlerrm;
+                ELSE
+                    RAISE NOTICE 'Test 13 failed: "Should fail to create a folder if the user does not have write permissions on the parent folder" - Unexpected exception: %', sqlerrm;
+                END IF;
+            END;
+
 
         EXCEPTION
             WHEN OTHERS THEN --
@@ -254,6 +277,8 @@ $$
 
         -- Tear down: Cleanup test data
         BEGIN
+            DELETE FROM virtual_file_system.public.resources WHERE id = _other_folder_id;
+            DELETE FROM virtual_file_system.public.users WHERE id = _other_user_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_broken_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_null_id;
             DELETE FROM virtual_file_system.public.resources r WHERE r.id = _resources_folder_b_id;
